@@ -1,6 +1,7 @@
 import type { Route } from "./+types/home";
 import { Welcome } from "../components/welcome/welcome";
 import { useAuth } from "../context/AuthContext";
+import { useRoleBasedNavigation } from "../hooks/useRoleBasedNavigation";
 import { useEffect } from "react";
 import { useNavigate } from "react-router";
 
@@ -14,13 +15,14 @@ export function meta({}: Route.MetaArgs) {
 export default function Home() {
   const { isAuthenticated } = useAuth();
   const navigate = useNavigate();
+  const { navigateBasedOnRole } = useRoleBasedNavigation();
 
   useEffect(() => {
-    // Si el usuario está logueado, redirigir al dashboard
+    // Si el usuario está logueado, usar navegación basada en roles
     if (isAuthenticated) {
-      navigate('/dashboard');
+      navigateBasedOnRole();
     }
-  }, [isAuthenticated, navigate]);
+  }, [isAuthenticated, navigateBasedOnRole]);
 
   // Solo mostrar Welcome cuando no está logueado
   return <Welcome />;

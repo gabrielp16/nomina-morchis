@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useAuth } from "../../context/AuthContext";
 import { useNavigate } from "react-router";
 import { authService } from "../../services/api";
+import { useRoleBasedNavigation } from "../../hooks/useRoleBasedNavigation";
 import { Eye, EyeOff, User, Lock, AlertCircle } from "lucide-react";
 
 import logoSistema from "./logo-sistema.svg";
@@ -15,6 +16,7 @@ export function Welcome() {
   
   const { login } = useAuth();
   const navigate = useNavigate();
+  const { navigateBasedOnRole } = useRoleBasedNavigation();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -39,7 +41,8 @@ export function Welcome() {
           role: response.data.user.role,
         });
         
-        navigate('/dashboard');
+        // Usar navegación basada en roles en lugar de ir siempre al dashboard
+        navigateBasedOnRole();
       } else {
         setError(response.message || "Error al iniciar sesión");
       }

@@ -120,7 +120,7 @@ export function Navigation() {
                         </Link>
 
                         {/* Empleados Link */}
-                        {hasPermission('READ_PAYROLL') && (
+                        {hasPermission('READ_USERS') && (
                           <Link
                             to="/employees"
                             className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-700 transition-colors"

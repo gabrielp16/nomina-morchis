@@ -17,8 +17,43 @@ export function PayrollDetailsModal({ isOpen, onClose, payroll }: PayrollDetails
     }).format(value);
   };
 
+  // Calcular subtotal real sumando los consumos individuales
+  const subtotalConsumos = payroll.consumos.reduce((sum, consumo) => sum + consumo.valor, 0);
+  const descuentoConsumos = subtotalConsumos * 0.15;
+  const totalConsumosCalculado = subtotalConsumos - descuentoConsumos;
+  
+  // Calcular salario neto para verificación
+  const salarioNetoCalculado = payroll.salarioBruto - totalConsumosCalculado - payroll.adelantoNomina + payroll.deudaMorchis;
+
   const formatTime = (time: string) => {
-    return time;
+    if (!time) return '';
+    
+    // Parse the time string (assuming HH:MM format)
+    const [hours, minutes] = time.split(':').map(Number);
+    
+    // Convert to 12-hour format
+    const period = hours >= 12 ? 'PM' : 'AM';
+    const displayHours = hours === 0 ? 12 : hours > 12 ? hours - 12 : hours;
+    
+    return `${displayHours}:${minutes.toString().padStart(2, '0')} ${period}`;
+  };
+
+  const formatDate = (dateInput: string | Date) => {
+    const date = typeof dateInput === 'string' ? new Date(dateInput) : dateInput;
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}/${month}/${day}`;
+  };
+
+  const formatDateTime = (dateInput: string | Date) => {
+    const date = typeof dateInput === 'string' ? new Date(dateInput) : dateInput;
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    const hours = String(date.getHours()).padStart(2, '0');
+    const minutes = String(date.getMinutes()).padStart(2, '0');
+    return `${year}/${month}/${day} ${hours}:${minutes}`;
   };
 
   const getEstadoBadge = (estado: 'PENDIENTE' | 'PROCESADA' | 'PAGADA') => {
@@ -35,7 +70,7 @@ export function PayrollDetailsModal({ isOpen, onClose, payroll }: PayrollDetails
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
       <div className="bg-white rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-        <div className="flex items-center justify-between p-6 border-b">
+        <div className="flex items-center justify-between p-6 border-b border-gray-300">
           <h3 className="text-lg font-medium text-gray-900">Detalles de Nómina</h3>
           <button
             onClick={onClose}
@@ -59,9 +94,6 @@ export function PayrollDetailsModal({ isOpen, onClose, payroll }: PayrollDetails
                   {payroll.employee.user.nombre} {payroll.employee.user.apellido}
                 </div>
                 <div className="text-sm text-gray-500">{payroll.employee.user.correo}</div>
-                <div className="text-sm text-gray-500">
-                  Salario por hora: {formatCurrency(payroll.employee.salarioPorHora)}
-                </div>
               </div>
               <div className="ml-auto">
                 <span className={`inline-flex px-3 py-1 text-sm font-semibold rounded-full ${getEstadoBadge(payroll.estado)}`}>
@@ -83,7 +115,7 @@ export function PayrollDetailsModal({ isOpen, onClose, payroll }: PayrollDetails
                 <div className="flex justify-between">
                   <span className="text-sm text-gray-500">Fecha:</span>
                   <span className="text-sm font-medium">
-                    {new Date(payroll.fecha).toLocaleDateString('es-ES')}
+                    {formatDate(payroll.fecha)}
                   </span>
                 </div>
                 <div className="flex justify-between">
@@ -115,12 +147,26 @@ export function PayrollDetailsModal({ isOpen, onClose, payroll }: PayrollDetails
                   <span className="text-sm text-gray-500">Salario bruto:</span>
                   <span className="text-sm font-medium">{formatCurrency(payroll.salarioBruto)}</span>
                 </div>
+                <hr className="border-gray-300" />
+                <div className="flex justify-between">
+                  <span className="text-sm text-gray-500">Consumo en el local:</span>
+                  <span className="text-sm font-medium text-red-600">
+                    {formatCurrency(subtotalConsumos)}
+                  </span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-sm text-green-600">Descuento 15%:</span>
+                  <span className="text-sm font-medium text-green-600">
+                    -{formatCurrency(descuentoConsumos)}
+                  </span>
+                </div>
                 <div className="flex justify-between">
                   <span className="text-sm text-gray-500">Total consumos:</span>
                   <span className="text-sm font-medium text-red-600">
-                    -{formatCurrency(payroll.totalConsumos)}
+                    -{formatCurrency(totalConsumosCalculado)}
                   </span>
-                </div>
+                </div>                
+                <hr className="border-gray-300" />
                 <div className="flex justify-between">
                   <span className="text-sm text-gray-500">Adelanto nómina:</span>
                   <span className="text-sm font-medium text-red-600">
@@ -137,7 +183,7 @@ export function PayrollDetailsModal({ isOpen, onClose, payroll }: PayrollDetails
                 <div className="flex justify-between">
                   <span className="text-sm font-medium text-gray-900">Salario neto:</span>
                   <span className="text-lg font-bold text-gray-900">
-                    {formatCurrency(payroll.salarioNeto)}
+                    {formatCurrency(salarioNetoCalculado)}
                   </span>
                 </div>
               </div>
@@ -146,19 +192,27 @@ export function PayrollDetailsModal({ isOpen, onClose, payroll }: PayrollDetails
 
           {/* Consumos detallados */}
           {payroll.consumos.length > 0 && (
-            <div className="mt-6">
+            <div className="mt-6 pt-4 border-t border-gray-300">
               <h4 className="text-md font-medium text-gray-900 mb-3">Consumos en el Local</h4>
               <div className="bg-gray-50 border border-gray-200 rounded-md p-4">
                 <div className="space-y-2">
                   {payroll.consumos.map((consumo, index) => (
-                    <div key={index} className="flex justify-between items-center py-2 border-b border-gray-200 last:border-b-0">
+                    <div key={index} className="flex justify-between items-center">
                       <span className="text-sm text-gray-700">{consumo.descripcion}</span>
                       <span className="text-sm font-medium">{formatCurrency(consumo.valor)}</span>
                     </div>
                   ))}
-                  <div className="flex justify-between items-center pt-2 font-medium">
+                  <div className="flex justify-between items-center pt-2 border-t border-gray-300">
+                    <span className="text-sm text-gray-700">Subtotal:</span>
+                    <span className="text-sm text-gray-900">{formatCurrency(subtotalConsumos)}</span>
+                  </div>
+                  <div className="flex justify-between items-center text-green-600">
+                    <span className="text-sm">Descuento del 15%:</span>
+                    <span className="text-sm">-{formatCurrency(descuentoConsumos)}</span>
+                  </div>
+                  <div className="flex justify-between items-center font-medium">
                     <span className="text-sm text-gray-900">Total:</span>
-                    <span className="text-sm text-gray-900">{formatCurrency(payroll.totalConsumos)}</span>
+                    <span className="text-sm text-gray-900">{formatCurrency(totalConsumosCalculado)}</span>
                   </div>
                 </div>
               </div>
@@ -185,18 +239,18 @@ export function PayrollDetailsModal({ isOpen, onClose, payroll }: PayrollDetails
                 <span className="font-medium">Procesado por:</span> {payroll.procesadoPor.nombre} {payroll.procesadoPor.apellido}
               </div>
               <div>
-                <span className="font-medium">Fecha de creación:</span> {new Date(payroll.createdAt).toLocaleString('es-ES')}
+                <span className="font-medium">Fecha de creación:</span> {formatDateTime(payroll.createdAt)}
               </div>
               {payroll.updatedAt !== payroll.createdAt && (
                 <div>
-                  <span className="font-medium">Última actualización:</span> {new Date(payroll.updatedAt).toLocaleString('es-ES')}
+                  <span className="font-medium">Última actualización:</span> {formatDateTime(payroll.updatedAt)}
                 </div>
               )}
             </div>
           </div>
         </div>
 
-        <div className="flex justify-end space-x-3 p-6 border-t">
+        <div className="flex justify-end space-x-3 p-6 border-t border-gray-300">
           <Button
             type="button"
             variant="outline"

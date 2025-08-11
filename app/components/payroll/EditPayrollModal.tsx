@@ -48,6 +48,8 @@ export function EditPayrollModal({
     horasTrabajadas: 0,
     minutosTrabajados: 0,
     salarioBruto: 0,
+    subtotalConsumos: 0,
+    descuentoConsumos: 0,
     totalConsumos: 0,
     totalDescuentos: 0,
     salarioNeto: 0
@@ -134,7 +136,14 @@ export function EditPayrollModal({
     const { horas, minutos } = calculateWorkTime(horaInicio, horaFin);
     const totalHoras = horas + (minutos / 60);
     const salarioBruto = totalHoras * (payroll.employee?.salarioPorHora || 0);
-    const totalConsumos = (consumos || []).reduce((sum: number, consumo: any) => sum + (consumo.valor || 0), 0);
+    
+    // Calcular subtotal de consumos (sin descuento)
+    const subtotalConsumos = (consumos || []).reduce((sum: number, consumo: any) => sum + (consumo.valor || 0), 0);
+    
+    // Calcular descuento del 15% sobre los consumos
+    const descuentoConsumos = subtotalConsumos * 0.15;
+    const totalConsumos = subtotalConsumos - descuentoConsumos;
+    
     const totalDescuentos = totalConsumos + (adelantoNomina || 0);
     const salarioNeto = salarioBruto - totalDescuentos + (deudaMorchis || 0);
     
@@ -142,6 +151,8 @@ export function EditPayrollModal({
       horasTrabajadas: horas,
       minutosTrabajados: minutos,
       salarioBruto,
+      subtotalConsumos,
+      descuentoConsumos,
       totalConsumos,
       totalDescuentos,
       salarioNeto
@@ -235,12 +246,13 @@ export function EditPayrollModal({
               {/* Fecha */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Fecha *
+                  Fecha (YYYY/MM/DD) *
                 </label>
                 <Input
                   type="date"
                   {...register('fecha')}
                   disabled={isLoading}
+                  placeholder="YYYY/MM/DD"
                 />
                 {errors.fecha && (
                   <p className="mt-1 text-sm text-red-600">{errors.fecha.message}</p>
@@ -436,6 +448,18 @@ export function EditPayrollModal({
                     <span className="text-blue-800">Salario bruto:</span>
                     <span className="font-medium text-blue-900">
                       {formatCurrency(calculatedValues.salarioBruto)}
+                    </span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-blue-800">Consumo en el local:</span>
+                    <span className="font-medium text-blue-900">
+                      {formatCurrency(calculatedValues.subtotalConsumos)}
+                    </span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-green-600">Descuento del 15%:</span>
+                    <span className="font-medium text-green-700">
+                      -{formatCurrency(calculatedValues.descuentoConsumos)}
                     </span>
                   </div>
                   <div className="flex justify-between">

@@ -6,6 +6,7 @@ import { Button } from '../ui/button';
 import { Input } from '../ui/input';
 import { Select } from '../ui/select';
 import { useToast } from '../../context/ToastContext';
+import { useEmployee } from '../../context/EmployeeContext';
 import { payrollService, employeeService } from '../../services/api';
 import { payrollSchema, type PayrollFormData } from '../../lib/validations';
 import type { Employee } from '../../types/auth';
@@ -32,11 +33,14 @@ export function CreatePayrollModal({
     horasTrabajadas: 0,
     minutosTrabajados: 0,
     salarioBruto: 0,
+    subtotalConsumos: 0,
+    descuentoConsumos: 0,
     totalConsumos: 0,
     totalDescuentos: 0,
     salarioNeto: 0
   });
   const { success, error: showError } = useToast();
+  const { currentEmployee } = useEmployee();
 
   const {
     register,
@@ -96,6 +100,8 @@ export function CreatePayrollModal({
         horasTrabajadas: 0,
         minutosTrabajados: 0,
         salarioBruto: 0,
+        subtotalConsumos: 0,
+        descuentoConsumos: 0,
         totalConsumos: 0,
         totalDescuentos: 0,
         salarioNeto: 0
@@ -120,6 +126,13 @@ export function CreatePayrollModal({
 
   const loadSingleEmployee = async (employeeId: string) => {
     try {
+      // For employee view, use context data instead of API call
+      if (isEmployeeView && currentEmployee) {
+        setEmployees([currentEmployee]);
+        return;
+      }
+      
+      // For admin view, use API call
       const response = await employeeService.getById(employeeId);
       if (response.success && response.data) {
         setEmployees([response.data]);
@@ -170,8 +183,12 @@ export function CreatePayrollModal({
     const totalHoras = horas + (minutos / 60);
     const salarioBruto = totalHoras * selectedEmployee.salarioPorHora;
     
-    // Calcular total de consumos
-    const totalConsumos = (consumos || []).reduce((sum: number, consumo: any) => sum + (consumo.valor || 0), 0);
+    // Calcular subtotal de consumos (sin descuento)
+    const subtotalConsumos = (consumos || []).reduce((sum: number, consumo: any) => sum + (consumo.valor || 0), 0);
+    
+    // Calcular descuento del 15% sobre los consumos
+    const descuentoConsumos = subtotalConsumos * 0.15;
+    const totalConsumos = subtotalConsumos - descuentoConsumos;
     
     // Calcular descuentos totales
     const totalDescuentos = totalConsumos + (adelantoNomina || 0);
@@ -183,6 +200,8 @@ export function CreatePayrollModal({
       horasTrabajadas: horas,
       minutosTrabajados: minutos,
       salarioBruto,
+      subtotalConsumos,
+      descuentoConsumos,
       totalConsumos,
       totalDescuentos,
       salarioNeto
@@ -302,12 +321,13 @@ export function CreatePayrollModal({
               {/* Fecha */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Fecha *
+                  Fecha (YYYY/MM/DD) *
                 </label>
                 <Input
                   type="date"
                   {...register('fecha')}
                   disabled={isLoading}
+                  placeholder="YYYY/MM/DD"
                 />
                 {errors.fecha && (
                   <p className="mt-1 text-sm text-red-600">{errors.fecha.message}</p>
@@ -483,6 +503,18 @@ export function CreatePayrollModal({
                     <span className="text-blue-800">Salario bruto:</span>
                     <span className="font-medium text-blue-900">
                       {formatCurrency(calculatedValues.salarioBruto)}
+                    </span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-blue-800">Consumo en el local:</span>
+                    <span className="font-medium text-blue-900">
+                      {formatCurrency(calculatedValues.subtotalConsumos)}
+                    </span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-green-600">Descuento del 15%:</span>
+                    <span className="font-medium text-green-700">
+                      -{formatCurrency(calculatedValues.descuentoConsumos)}
                     </span>
                   </div>
                   <div className="flex justify-between">

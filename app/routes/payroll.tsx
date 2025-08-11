@@ -86,7 +86,7 @@ export default function PayrollPage() {
 
     const result = await confirm({
       title: '¿Estás seguro?',
-      message: `¿Deseas eliminar la nómina del ${new Date(payroll.fecha).toLocaleDateString('es-ES')} para ${payroll.employee?.user?.nombre || 'Usuario'} ${payroll.employee?.user?.apellido || ''}?`
+      message: `¿Deseas eliminar la nómina del ${formatDate(payroll.fecha)} para ${payroll.employee?.user?.nombre || 'Usuario'} ${payroll.employee?.user?.apellido || ''}?`
     });
 
     if (result) {
@@ -131,8 +131,40 @@ export default function PayrollPage() {
     }).format(value);
   };
 
+  // Función para calcular el salario neto correcto en tiempo real
+  const calculateCorrectSalarioNeto = (payroll: Payroll) => {
+    // Calcular subtotal real de consumos sumando los consumos individuales
+    const subtotalConsumos = payroll.consumos.reduce((sum, consumo) => sum + consumo.valor, 0);
+    
+    // Calcular descuento del 15% sobre los consumos
+    const descuentoConsumos = subtotalConsumos * 0.15;
+    const totalConsumos = subtotalConsumos - descuentoConsumos;
+    
+    // Calcular salario neto: salario bruto - total consumos - adelanto + deuda
+    const salarioNeto = payroll.salarioBruto - totalConsumos - payroll.adelantoNomina + payroll.deudaMorchis;
+    
+    return salarioNeto;
+  };
+
   const formatTime = (time: string) => {
-    return time;
+    if (!time) return '';
+    
+    // Parse the time string (assuming HH:MM format)
+    const [hours, minutes] = time.split(':').map(Number);
+    
+    // Convert to 12-hour format
+    const period = hours >= 12 ? 'PM' : 'AM';
+    const displayHours = hours === 0 ? 12 : hours > 12 ? hours - 12 : hours;
+    
+    return `${displayHours}:${minutes.toString().padStart(2, '0')} ${period}`;
+  };
+
+  const formatDate = (dateInput: string | Date) => {
+    const date = typeof dateInput === 'string' ? new Date(dateInput) : dateInput;
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}/${month}/${day}`;
   };
 
   const getEstadoBadge = (estado: 'PENDIENTE' | 'PROCESADA' | 'PAGADA') => {
@@ -352,7 +384,7 @@ export default function PayrollPage() {
                                 </td>
                               )}
                               <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                {new Date(payroll.fecha).toLocaleDateString('es-ES')}
+                                {formatDate(payroll.fecha)}
                               </td>
                               <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                                 {formatTime(payroll.horaInicio)} - {formatTime(payroll.horaFin)}
@@ -361,7 +393,7 @@ export default function PayrollPage() {
                                 {payroll.horasTrabajadas}h {payroll.minutosTrabajados}m
                               </td>
                               <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                                {formatCurrency(payroll.salarioNeto)}
+                                {formatCurrency(calculateCorrectSalarioNeto(payroll))}
                               </td>
                               <td className="px-6 py-4 whitespace-nowrap">
                                 <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getEstadoBadge(payroll.estado)}`}>
@@ -417,7 +449,7 @@ export default function PayrollPage() {
                                 </div>
                               )}
                               <div className="text-sm text-gray-500">
-                                {new Date(payroll.fecha).toLocaleDateString('es-ES')}
+                                {formatDate(payroll.fecha)}
                               </div>
                             </div>
                             <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getEstadoBadge(payroll.estado)}`}>
@@ -440,7 +472,9 @@ export default function PayrollPage() {
                                 <DollarSign className="h-4 w-4 mr-1" />
                                 Salario Neto:
                               </span>
-                              <div className="font-medium">{formatCurrency(payroll.salarioNeto)}</div>
+                              <div className="font-medium">
+                                {formatCurrency(calculateCorrectSalarioNeto(payroll))}
+                              </div>
                             </div>
                           </div>
 

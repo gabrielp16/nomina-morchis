@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useAuth } from '../../context/AuthContext';
+import { useRoleBasedNavigation } from '../../hooks/useRoleBasedNavigation';
 import { Loading } from '../loading/loading';
 import { Navigate } from 'react-router';
 
@@ -15,6 +16,7 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   requireRole 
 }) => {
   const { user, isLoading, logout } = useAuth();
+  const { getDefaultRoute } = useRoleBasedNavigation();
   const [isRedirecting, setIsRedirecting] = useState(false);
 
   useEffect(() => {
@@ -38,26 +40,7 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
       }
 
       // Usuario no tiene los permisos requeridos
-      // Verificar si tiene acceso al dashboard como fallback
-      if (user.permissions?.includes('READ_DASHBOARD')) {
-        setIsRedirecting(true);
-        return;
-      }
-
-      // Verificar si tiene al menos algún permiso básico
-      const basicPermissions = ['READ_USERS', 'READ_ROLES', 'READ_PERMISSIONS', 'READ_AUDIT'];
-      const hasBasicPermissions = basicPermissions.some(permission =>
-        user.permissions?.includes(permission)
-      );
-
-      if (hasBasicPermissions) {
-        // Redirigir al dashboard para mostrar acceso restringido
-        setIsRedirecting(true);
-        return;
-      }
-
-      // Usuario no tiene ningún permiso, cerrar sesión y redirigir
-      logout();
+      // Usar la lógica de navegación basada en roles para redirigir
       setIsRedirecting(true);
       return;
     }
@@ -68,23 +51,7 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
       const hasRequiredRole = requiredRoles.some(role => user.role === role);
 
       if (!hasRequiredRole) {
-        // Usuario no tiene el rol requerido, aplicar la misma lógica de fallback
-        if (user.permissions?.includes('READ_DASHBOARD')) {
-          setIsRedirecting(true);
-          return;
-        }
-
-        const basicPermissions = ['READ_USERS', 'READ_ROLES', 'READ_PERMISSIONS', 'READ_AUDIT'];
-        const hasBasicPermissions = basicPermissions.some(permission =>
-          user.permissions?.includes(permission)
-        );
-
-        if (hasBasicPermissions) {
-          setIsRedirecting(true);
-          return;
-        }
-
-        logout();
+        // Usuario no tiene el rol requerido, usar navegación basada en roles
         setIsRedirecting(true);
         return;
       }
@@ -102,22 +69,9 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
       return <Navigate to="/" replace />;
     }
 
-    // Verificar si debe ir al dashboard o ser deslogueado
-    if (user.permissions?.includes('READ_DASHBOARD')) {
-      return <Navigate to="/dashboard" replace />;
-    }
-
-    const basicPermissions = ['READ_USERS', 'READ_ROLES', 'READ_PERMISSIONS', 'READ_AUDIT'];
-    const hasBasicPermissions = basicPermissions.some(permission =>
-      user.permissions?.includes(permission)
-    );
-
-    if (hasBasicPermissions) {
-      return <Navigate to="/dashboard" replace />;
-    }
-
-    // No tiene permisos, ya se ejecutó logout, redirigir a welcome
-    return <Navigate to="/" replace />;
+    // Usar la ruta predeterminada basada en el rol
+    const defaultRoute = getDefaultRoute();
+    return <Navigate to={defaultRoute} replace />;
   }
 
   // Usuario no autenticado

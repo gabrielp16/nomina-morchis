@@ -8,6 +8,7 @@ import { cn } from '../../lib/utils';
 import { loginSchema, registerSchema } from '../../lib/validations';
 import { useAuth } from '../../context/AuthContext';
 import { useToast } from '../../context/ToastContext';
+import { useRoleBasedNavigation } from '../../hooks/useRoleBasedNavigation';
 import { authService, type LoginData, type RegisterData } from '../../services/api';
 import type { LoginFormData, RegisterFormData } from '../../lib/validations';
 import type { LoginSidebarProps } from '../../types/auth';
@@ -19,6 +20,7 @@ export function LoginSidebar({ isOpen, onClose, mode, onModeChange }: LoginSideb
   const [error, setError] = useState<string | null>(null);
   const { login } = useAuth();
   const { success, error: showError } = useToast();
+  const { navigateBasedOnRole } = useRoleBasedNavigation();
 
   const loginForm = useForm<LoginFormData>({
     resolver: zodResolver(loginSchema),
@@ -74,6 +76,9 @@ export function LoginSidebar({ isOpen, onClose, mode, onModeChange }: LoginSideb
         
         success('¡Bienvenido! Has iniciado sesión correctamente');
         onClose();
+        
+        // Navegar basado en el rol del usuario
+        navigateBasedOnRole();
       } catch (apiError) {
         console.warn('Backend no disponible', apiError);
         showError('No se pudo conectar con el servidor. Verifica tu conexión.');
@@ -92,6 +97,7 @@ export function LoginSidebar({ isOpen, onClose, mode, onModeChange }: LoginSideb
           login('mock-jwt-token-admin', mockAdminUser);
           success('¡Bienvenido Administrador! Sesión iniciada en modo demo');
           onClose();
+          navigateBasedOnRole();
         }
       }
     } catch (error) {
@@ -143,6 +149,7 @@ export function LoginSidebar({ isOpen, onClose, mode, onModeChange }: LoginSideb
         
         success('¡Cuenta creada exitosamente! Has iniciado sesión automáticamente');
         onClose();
+        navigateBasedOnRole();
       } catch (apiError) {
         // Si el backend no está disponible, usar datos de prueba
         console.warn('Backend no disponible, usando datos de prueba:', apiError);
@@ -159,6 +166,7 @@ export function LoginSidebar({ isOpen, onClose, mode, onModeChange }: LoginSideb
         login('mock-jwt-token-new-user', mockUser);
         success('¡Cuenta creada exitosamente en modo demo!');
         onClose();
+        navigateBasedOnRole();
       }
     } catch (error) {
       console.error('Error en registro:', error);

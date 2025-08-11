@@ -88,7 +88,7 @@ export default function EmployeesPage() {
   };
 
   return (
-    <ProtectedRoute requiredPermissions={["READ_PAYROLL"]}>
+    <ProtectedRoute requiredPermissions={["READ_USERS"]}>
       <div className="min-h-screen bg-gray-50">
         <div className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
           <div className="px-4 py-6 sm:px-0">
@@ -103,7 +103,7 @@ export default function EmployeesPage() {
                 </p>
               </div>
               <div className="mt-4 flex md:mt-0 md:ml-4">
-                {hasPermission('CREATE_PAYROLL') && (
+                {hasPermission('CREATE_USERS') && (
                   <Button
                     onClick={() => setShowCreateModal(true)}
                     className="inline-flex items-center"
@@ -143,7 +143,7 @@ export default function EmployeesPage() {
                     <p className="mt-1 text-sm text-gray-500">
                       {search ? 'No se encontraron empleados que coincidan con la búsqueda.' : 'Comienza creando tu primer empleado.'}
                     </p>
-                    {hasPermission('CREATE_PAYROLL') && !search && (
+                    {hasPermission('CREATE_USERS') && !search && (
                       <div className="mt-6">
                         <Button onClick={() => setShowCreateModal(true)}>
                           <Plus className="h-4 w-4 mr-2" />
@@ -219,7 +219,7 @@ export default function EmployeesPage() {
                               </td>
                               <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                                 <div className="flex justify-end space-x-2">
-                                  {hasPermission('UPDATE_PAYROLL') && (
+                                  {hasPermission('UPDATE_USERS') && (
                                     <Button
                                       variant="outline"
                                       size="sm"
@@ -228,7 +228,7 @@ export default function EmployeesPage() {
                                       <Edit className="h-4 w-4" />
                                     </Button>
                                   )}
-                                  {hasPermission('DELETE_PAYROLL') && employee.isActive && (
+                                  {hasPermission('DELETE_USERS') && employee.isActive && (
                                     <Button
                                       variant="outline"
                                       size="sm"
@@ -285,7 +285,7 @@ export default function EmployeesPage() {
                           </div>
 
                           <div className="mt-4 flex justify-end space-x-2">
-                            {hasPermission('UPDATE_PAYROLL') && (
+                            {hasPermission('UPDATE_USERS') && (
                               <Button
                                 variant="outline"
                                 size="sm"
@@ -295,7 +295,7 @@ export default function EmployeesPage() {
                                 Editar
                               </Button>
                             )}
-                            {hasPermission('DELETE_PAYROLL') && employee.isActive && (
+                            {hasPermission('DELETE_USERS') && employee.isActive && (
                               <Button
                                 variant="outline"
                                 size="sm"

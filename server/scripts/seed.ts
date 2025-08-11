@@ -4,6 +4,7 @@ import dotenv from 'dotenv';
 import Permission from '../models/Permission.js';
 import Role from '../models/Role.js';
 import User from '../models/User.js';
+import Employee from '../models/Employee.js';
 import { connectDB, disconnectDB } from '../config/database.js';
 
 dotenv.config();
@@ -76,7 +77,7 @@ const seedPermissions = async (): Promise<mongoose.Types.ObjectId[]> => {
 };
 
 // Función para crear roles
-const seedRoles = async (permissionIds: mongoose.Types.ObjectId[]): Promise<{ adminRoleId: mongoose.Types.ObjectId; userRoleId: mongoose.Types.ObjectId }> => {
+const seedRoles = async (permissionIds: mongoose.Types.ObjectId[]): Promise<{ adminRoleId: mongoose.Types.ObjectId; userRoleId: mongoose.Types.ObjectId; empleadoRoleId: mongoose.Types.ObjectId }> => {
   console.log('🌱 Creando roles por defecto...');
   
   // Rol de Super Administrador - todos los permisos
@@ -165,10 +166,10 @@ const seedRoles = async (permissionIds: mongoose.Types.ObjectId[]): Promise<{ ad
     console.log('  - Rol ya existe: Supervisor');
   }
 
-  // Rol de Empleado - acceso limitado
+  // Rol de Empleado - acceso limitado (SIN READ_DASHBOARD)
   const empleadoPermissions = await Permission.find({
     nombre: {
-      $in: ['READ_DASHBOARD', 'READ_PAYROLL', 'CREATE_PAYROLL', 'UPDATE_PAYROLL']
+      $in: ['READ_PAYROLL', 'CREATE_PAYROLL', 'UPDATE_PAYROLL']
     }
   });
   
@@ -176,7 +177,7 @@ const seedRoles = async (permissionIds: mongoose.Types.ObjectId[]): Promise<{ ad
   if (!empleadoRole) {
     empleadoRole = new Role({
       nombre: 'Empleado',
-      descripcion: 'Empleado con acceso limitado a su información de nómina',
+      descripcion: 'Empleado con acceso limitado a gestión de su propia nómina',
       permisos: empleadoPermissions.map(p => p._id),
       isActive: true
     });
@@ -216,16 +217,17 @@ const seedRoles = async (permissionIds: mongoose.Types.ObjectId[]): Promise<{ ad
 
   return {
     adminRoleId: superAdminRole._id,
-    userRoleId: userRole._id
+    userRoleId: userRole._id,
+    empleadoRoleId: empleadoRole._id
   };
 };
 
 // Función para crear usuario administrador
-const seedUsers = async (adminRoleId: mongoose.Types.ObjectId, userRoleId: mongoose.Types.ObjectId): Promise<void> => {
+const seedUsers = async (adminRoleId: mongoose.Types.ObjectId, userRoleId: mongoose.Types.ObjectId, empleadoRoleId: mongoose.Types.ObjectId): Promise<void> => {
   console.log('🌱 Creando usuarios por defecto...');
   
   // TEMPORAL: Eliminar usuarios existentes para recrearlos
-  await User.deleteMany({ correo: { $in: ['admin@morchis.com', 'usuario@morchis.com'] } });
+  await User.deleteMany({ correo: { $in: ['admin@morchis.com', 'usuario@morchis.com', 'empleado@morchis.com'] } });
   console.log('  🗑️ Usuarios existentes eliminados para recreación');
   
   // Usuario Super Administrador
@@ -259,6 +261,37 @@ const seedUsers = async (adminRoleId: mongoose.Types.ObjectId, userRoleId: mongo
 
   await testUser.save();
   console.log('  ✓ Usuario de prueba creado: usuario@morchis.com / usuario123');
+  
+  // Usuario Empleado
+  const empleadoUser = new User({
+    nombre: 'Juan',
+    apellido: 'Trabajador',
+    correo: 'empleado@morchis.com',
+    numeroCelular: '+57300123456',
+    password: 'empleado123', // Sin hashear - el middleware lo hará
+    role: empleadoRoleId,
+    isActive: true,
+    emailVerified: true,
+    authProvider: 'local' // Importante: especificar que es local
+  });
+
+  await empleadoUser.save();
+  console.log('  ✓ Usuario empleado creado: empleado@morchis.com / empleado123');
+  
+  // Crear registro de Employee para el usuario empleado
+  const existingEmployee = await Employee.findOne({ user: empleadoUser._id });
+  if (!existingEmployee) {
+    const newEmployee = new Employee({
+      user: empleadoUser._id,
+      salarioPorHora: 15000, // $15,000 por hora
+      isActive: true
+    });
+    
+    await newEmployee.save();
+    console.log('  ✓ Registro de empleado creado con salario: $15,000/hora');
+  } else {
+    console.log('  - Registro de empleado ya existe');
+  }
 };
 
 // Función principal de seeding
@@ -275,17 +308,18 @@ const seedDatabase = async (standalone: boolean = true): Promise<void> => {
     console.log(`✅ Permisos procesados: ${permissionIds.length}\n`);
     
     // Crear roles
-    const { adminRoleId, userRoleId } = await seedRoles(permissionIds);
+    const { adminRoleId, userRoleId, empleadoRoleId } = await seedRoles(permissionIds);
     console.log('✅ Roles procesados\n');
     
     // Crear usuarios
-    await seedUsers(adminRoleId, userRoleId);
+    await seedUsers(adminRoleId, userRoleId, empleadoRoleId);
     console.log('✅ Usuarios procesados\n');
     
     console.log('🎉 Proceso de seeding completado exitosamente!');
     console.log('\n📋 Credenciales de acceso:');
     console.log('   👤 Admin: admin@morchis.com / admin123');
     console.log('   👤 Usuario: usuario@morchis.com / usuario123');
+    console.log('   👤 Empleado: empleado@morchis.com / empleado123');
     
   } catch (error) {
     console.error('❌ Error durante el seeding:', error);
