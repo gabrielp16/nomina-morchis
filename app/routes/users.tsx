@@ -33,14 +33,18 @@ export default function UsersPage() {
     try {
       const response = await userService.getAll(currentPage, 10, search);
       if (response.success && response.data) {
-        setUsers(response.data.data);
-        setTotalPages(response.data.pagination.totalPages);
+        setUsers(response.data.data || []);
+        setTotalPages(response.data.pagination?.totalPages || 1);
       } else {
         showError(response.error || 'Error al cargar los usuarios');
+        setUsers([]);
+        setTotalPages(1);
       }
     } catch (error) {
       console.error('Error loading users:', error);
       showError('Error al cargar los usuarios');
+      setUsers([]);
+      setTotalPages(1);
     } finally {
       setLoading(false);
     }
