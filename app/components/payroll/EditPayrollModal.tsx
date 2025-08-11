@@ -221,7 +221,7 @@ export function EditPayrollModal({
           </button>
         </div>
 
-        <form onSubmit={handleSubmit(onSubmit)} className="p-6">
+        <form onSubmit={handleSubmit(onSubmit)} className="p-4">
           {error && (
             <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-md">
               <p className="text-sm text-red-600">{error}</p>
@@ -229,7 +229,7 @@ export function EditPayrollModal({
           )}
 
           {/* Información del empleado */}
-          <div className="mb-6 p-3 bg-gray-50 border border-gray-200 rounded-md">
+          <div className="mb-4 p-3 bg-gray-50 border border-gray-200 rounded-md">
             <h4 className="text-sm font-medium text-gray-900 mb-2">Empleado</h4>
             <div className="text-sm text-gray-700">
               <strong>{payroll.employee?.user?.nombre || 'N/A'} {payroll.employee?.user?.apellido || ''}</strong>
@@ -398,11 +398,12 @@ export function EditPayrollModal({
                   </div>
                 ) : (
                   fields.map((field, index) => (
-                    <div key={field.id} className="flex gap-2 items-start">
+                    <div key={field.id} className="flex mb-1 gap-2 items-start">
                       <div className="flex-1">
                         <Input
+                          className='focus:outline-none focus:ring-0 focus:border-gray-300'
                           type="number"
-                          step="100"
+                          step="50"
                           min="0"
                           {...register(`consumos.${index}.valor`, { valueAsNumber: true })}
                           placeholder="Valor"
@@ -411,6 +412,7 @@ export function EditPayrollModal({
                       </div>
                       <div className="flex-2">
                         <Input
+                          className='focus:outline-none focus:ring-0 focus:border-gray-300'
                           {...register(`consumos.${index}.descripcion`)}
                           placeholder="Descripción"
                           disabled={isLoading}

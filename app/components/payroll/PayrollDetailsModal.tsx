@@ -1,4 +1,5 @@
-import { X, User, Calendar, Clock, DollarSign, FileText } from 'lucide-react';
+import { useState } from 'react';
+import { X, User, Clock, DollarSign, FileText, ChevronDown, ChevronUp } from 'lucide-react';
 import { Button } from '../ui/button';
 import type { Payroll } from '../../types/auth';
 
@@ -9,6 +10,8 @@ interface PayrollDetailsModalProps {
 }
 
 export function PayrollDetailsModal({ isOpen, onClose, payroll }: PayrollDetailsModalProps) {
+  const [isConsumosCollapsed, setIsConsumosCollapsed] = useState(true);
+
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat('es-CO', {
       style: 'currency',
@@ -193,29 +196,58 @@ export function PayrollDetailsModal({ isOpen, onClose, payroll }: PayrollDetails
           {/* Consumos detallados */}
           {payroll.consumos.length > 0 && (
             <div className="mt-6 pt-4 border-t border-gray-300">
-              <h4 className="text-md font-medium text-gray-900 mb-3">Consumos en el Local</h4>
-              <div className="bg-gray-50 border border-gray-200 rounded-md p-4">
-                <div className="space-y-2">
-                  {payroll.consumos.map((consumo, index) => (
-                    <div key={index} className="flex justify-between items-center">
-                      <span className="text-sm text-gray-700">{consumo.descripcion}</span>
-                      <span className="text-sm font-medium">{formatCurrency(consumo.valor)}</span>
-                    </div>
-                  ))}
-                  <div className="flex justify-between items-center pt-2 border-t border-gray-300">
-                    <span className="text-sm text-gray-700">Subtotal:</span>
-                    <span className="text-sm text-gray-900">{formatCurrency(subtotalConsumos)}</span>
-                  </div>
-                  <div className="flex justify-between items-center text-green-600">
-                    <span className="text-sm">Descuento del 15%:</span>
-                    <span className="text-sm">-{formatCurrency(descuentoConsumos)}</span>
-                  </div>
-                  <div className="flex justify-between items-center font-medium">
-                    <span className="text-sm text-gray-900">Total:</span>
-                    <span className="text-sm text-gray-900">{formatCurrency(totalConsumosCalculado)}</span>
-                  </div>
+              <div 
+                className="flex items-center justify-between cursor-pointer mb-3"
+                onClick={() => setIsConsumosCollapsed(!isConsumosCollapsed)}
+              >
+                <h4 className="text-md font-medium text-gray-900 flex items-center">
+                  Consumos en el Local
+                  <span className="ml-2 text-sm text-gray-500">
+                    ({payroll.consumos.length} {payroll.consumos.length === 1 ? 'item' : 'items'})
+                  </span>
+                </h4>
+                <div className="flex items-center text-gray-500 hover:text-gray-700">
+                  {isConsumosCollapsed ? (
+                    <ChevronDown className="h-5 w-5" />
+                  ) : (
+                    <ChevronUp className="h-5 w-5" />
+                  )}
                 </div>
               </div>
+              
+              {!isConsumosCollapsed && (
+                <div className="bg-gray-50 border border-gray-200 rounded-md p-4">
+                  <div className="space-y-2">
+                    {payroll.consumos.map((consumo, index) => (
+                      <div key={index} className="flex justify-between items-center">
+                        <span className="text-sm text-gray-700">{consumo.descripcion}</span>
+                        <span className="text-sm font-medium">{formatCurrency(consumo.valor)}</span>
+                      </div>
+                    ))}
+                    <div className="flex justify-between items-center pt-2 border-t border-gray-300">
+                      <span className="text-sm text-gray-700">Subtotal:</span>
+                      <span className="text-sm text-gray-900">{formatCurrency(subtotalConsumos)}</span>
+                    </div>
+                    <div className="flex justify-between items-center text-green-600">
+                      <span className="text-sm">Descuento del 15%:</span>
+                      <span className="text-sm">-{formatCurrency(descuentoConsumos)}</span>
+                    </div>
+                    <div className="flex justify-between items-center font-medium">
+                      <span className="text-sm text-gray-900">Total:</span>
+                      <span className="text-sm text-gray-900">{formatCurrency(totalConsumosCalculado)}</span>
+                    </div>
+                  </div>
+                </div>
+              )}
+              
+              {isConsumosCollapsed && (
+                <div className="bg-gray-50 border border-gray-200 rounded-md p-3">
+                  <div className="flex justify-between items-center text-sm text-gray-600">
+                    <span>Total consumos con descuento:</span>
+                    <span className="font-medium">{formatCurrency(totalConsumosCalculado)}</span>
+                  </div>
+                </div>
+              )}
             </div>
           )}
 
