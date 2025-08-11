@@ -4,8 +4,11 @@ import { Activity } from '../models/Activity.js';
 interface AuthenticatedRequest extends Request {
   user?: {
     id: string;
-    name: string;
-    email: string;
+    nombre: string;
+    apellido: string;
+    correo: string;
+    name?: string;
+    email?: string;
   };
 }
 
@@ -58,8 +61,8 @@ export const activityLogger = (action: string, resource: string) => {
             
             await Activity.logActivity({
               userId: req.user.id,
-              userName: req.user.name,
-              userEmail: req.user.email,
+              userName: req.user.name || `${req.user.nombre} ${req.user.apellido}`,
+              userEmail: req.user.email || req.user.correo,
               action,
               resource,
               resourceId: req.params.id || undefined,

@@ -1,4 +1,4 @@
-import type { User, Role, Permission, ActivityLog, ApiResponse, PaginatedResponse, UserFormData, CreateUserFormData, RoleFormData, PermissionFormData, DashboardStats, RecentActivity } from '../types/auth';
+import type { User, Role, Permission, ActivityLog, ApiResponse, PaginatedResponse, UserFormData, CreateUserFormData, RoleFormData, PermissionFormData, DashboardStats, RecentActivity, Employee, Payroll } from '../types/auth';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3001/api';
 
@@ -319,5 +319,122 @@ export const dashboardApi = {
       limit: limit.toString(),
     });
     return fetchApi<RecentActivity[]>(`/dashboard/recent-activities?${params}`);
+  },
+};
+
+// Servicios para empleados
+export const employeeService = {
+  getAll: (page: number = 1, limit: number = 10, search: string = '') => {
+    const params = new URLSearchParams({
+      page: page.toString(),
+      limit: limit.toString(),
+      ...(search && { search }),
+    });
+    return fetchApi<PaginatedResponse<Employee>>(`/employees?${params}`);
+  },
+
+  getById: (id: string) => {
+    return fetchApi<Employee>(`/employees/${id}`);
+  },
+
+  create: (data: { userId: string; salarioPorHora?: number }) => {
+    return fetchApi<Employee>('/employees', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  },
+
+  update: (id: string, data: { salarioPorHora: number }) => {
+    return fetchApi<Employee>(`/employees/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    });
+  },
+
+  delete: (id: string) => {
+    return fetchApi<Employee>(`/employees/${id}`, {
+      method: 'DELETE',
+    });
+  },
+
+  getAvailableUsers: () => {
+    return fetchApi<User[]>('/employees/users/available');
+  },
+};
+
+// Servicios para nómina
+export const payrollService = {
+  getAll: (page: number = 1, limit: number = 10, filters: {
+    search?: string;
+    estado?: string;
+    empleadoId?: string;
+    fechaInicio?: string;
+    fechaFin?: string;
+  } = {}) => {
+    const params = new URLSearchParams({
+      page: page.toString(),
+      limit: limit.toString(),
+      ...Object.fromEntries(
+        Object.entries(filters).filter(([_, value]) => value !== undefined && value !== '')
+      ),
+    });
+    return fetchApi<PaginatedResponse<Payroll>>(`/payroll?${params}`);
+  },
+
+  getById: (id: string) => {
+    return fetchApi<Payroll>(`/payroll/${id}`);
+  },
+
+  create: (data: {
+    employeeId: string;
+    fecha: string;
+    horaInicio: string;
+    horaFin: string;
+    consumos: { valor: number; descripcion: string }[];
+    deudaMorchis?: number;
+    adelantoNomina?: number;
+    observaciones?: string;
+  }) => {
+    return fetchApi<Payroll>('/payroll', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  },
+
+  update: (id: string, data: {
+    fecha?: string;
+    horaInicio?: string;
+    horaFin?: string;
+    consumos?: { valor: number; descripcion: string }[];
+    deudaMorchis?: number;
+    adelantoNomina?: number;
+    estado?: 'PENDIENTE' | 'PROCESADA' | 'PAGADA';
+    observaciones?: string;
+  }) => {
+    return fetchApi<Payroll>(`/payroll/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    });
+  },
+
+  delete: (id: string) => {
+    return fetchApi<Payroll>(`/payroll/${id}`, {
+      method: 'DELETE',
+    });
+  },
+
+  getStats: () => {
+    return fetchApi<{
+      totalNominas: number;
+      nominasPendientes: number;
+      nominasProcesadas: number;
+      nominasPagadas: number;
+      nominasMesActual: number;
+      totalPagadoMesActual: number;
+    }>('/payroll/stats/summary');
+  },
+
+  getMyEmployee: () => {
+    return fetchApi<Employee>('/payroll/my-employee');
   },
 };

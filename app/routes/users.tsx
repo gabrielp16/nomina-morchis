@@ -34,7 +34,7 @@ export default function UsersPage() {
       const response = await userService.getAll(currentPage, 10, search);
       if (response.success && response.data) {
         setUsers(response.data.data);
-        setTotalPages(response.data.totalPages);
+        setTotalPages(response.data.pagination.totalPages);
       } else {
         showError(response.error || 'Error al cargar los usuarios');
       }

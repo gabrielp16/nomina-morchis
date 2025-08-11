@@ -17,6 +17,7 @@
     "clean": "rimraf dist",
     "prepare": "npm run build",
     "seed": "tsx scripts/seed.ts",
+    "setup-employee": "tsx scripts/setup-employee.ts",
     "view-users": "tsx scripts/view-users.ts"
   },
   "dependencies": {

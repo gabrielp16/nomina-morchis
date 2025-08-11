@@ -74,6 +74,8 @@ const ActivitySchema = new Schema<IActivity>({
       'USERS',
       'ROLES',
       'PERMISSIONS',
+      'EMPLOYEE',
+      'PAYROLL',
       'SYSTEM',
       'DATA'
     ]

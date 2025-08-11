@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { User, LogOut, Settings, Shield, Users, ChevronDown, Activity, UserCheck, ChartArea } from 'lucide-react';
+import { User, LogOut, Settings, Shield, Users, ChevronDown, Activity, UserCheck, ChartArea, DollarSign, UserCog } from 'lucide-react';
 import { Button } from '../ui/button';
 import { LoginSidebar } from './LoginSidebar';
 import { useAuth } from '../../context/AuthContext';
@@ -96,11 +96,11 @@ export function Navigation() {
                         </div>
                       </div>
                       
-                      {/* 2. SECCIÓN DE CONFIGURACIÓN */}
+                      {/* 2. SECCIÓN DE NAVEGACIÓN PRINCIPAL */}
                       <div className="py-2">
                         <div className="px-4 py-1">
                           <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                            Sistema
+                            Gestión
                           </p>
                         </div>
                         
@@ -119,6 +119,49 @@ export function Navigation() {
                           <span className="font-medium">Dashboard</span>
                         </Link>
 
+                        {/* Empleados Link */}
+                        {hasPermission('READ_PAYROLL') && (
+                          <Link
+                            to="/employees"
+                            className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-700 transition-colors"
+                            onClick={() => {
+                              setShowUserMenu(false);
+                              setShowConfigMenu(false);
+                            }}
+                          >
+                            <div className="h-8 w-8 bg-green-100 rounded-lg flex items-center justify-center mr-3">
+                              <UserCog className="h-4 w-4 text-green-600" />
+                            </div>
+                            <span className="font-medium">Empleados</span>
+                          </Link>
+                        )}
+
+                        {/* Nómina Link */}
+                        {hasPermission('READ_PAYROLL') && (
+                          <Link
+                            to="/payroll"
+                            className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-700 transition-colors"
+                            onClick={() => {
+                              setShowUserMenu(false);
+                              setShowConfigMenu(false);
+                            }}
+                          >
+                            <div className="h-8 w-8 bg-purple-100 rounded-lg flex items-center justify-center mr-3">
+                              <DollarSign className="h-4 w-4 text-purple-600" />
+                            </div>
+                            <span className="font-medium">Nómina</span>
+                          </Link>
+                        )}
+                      </div>
+                      
+                      {/* 3. SECCIÓN DE CONFIGURACIÓN */}
+                      <div className="border-t border-gray-200 pt-2">
+                        <div className="px-4 py-1">
+                          <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                            Sistema
+                          </p>
+                        </div>
+
                         {/* Configuración con Submenú */}
                         <div className="relative">
                           <button
@@ -134,7 +177,7 @@ export function Navigation() {
                             <ChevronDown className={`h-4 w-4 transition-transform duration-200 ${showConfigMenu ? 'rotate-180 text-blue-600' : 'text-gray-400'}`} />
                           </button>
                           
-                          {/* 2.1-2.4 Submenú de Configuración */}
+                          {/* 3.1-3.4 Submenú de Configuración */}
                           {showConfigMenu && (
                             <div className="bg-gray-50 border-l-2 border-blue-200 ml-4 mr-2 rounded-r-lg">
                               {hasPermission('READ_USERS') && (
@@ -205,7 +248,7 @@ export function Navigation() {
                         </div>
                       </div>
                       
-                      {/* 3. LOGOUT */}
+                      {/* 4. LOGOUT */}
                       <div className="border-t border-gray-200 pt-2 mt-2">
                         <div className="px-4 py-1">
                           <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider">

@@ -168,7 +168,7 @@ const seedRoles = async (permissionIds: mongoose.Types.ObjectId[]): Promise<{ ad
   // Rol de Empleado - acceso limitado
   const empleadoPermissions = await Permission.find({
     nombre: {
-      $in: ['READ_DASHBOARD', 'READ_PAYROLL']
+      $in: ['READ_DASHBOARD', 'READ_PAYROLL', 'CREATE_PAYROLL', 'UPDATE_PAYROLL']
     }
   });
   
@@ -183,7 +183,10 @@ const seedRoles = async (permissionIds: mongoose.Types.ObjectId[]): Promise<{ ad
     await empleadoRole.save();
     console.log('  ✓ Rol creado: Empleado');
   } else {
-    console.log('  - Rol ya existe: Empleado');
+    // Update existing role with new permissions
+    empleadoRole.permisos = empleadoPermissions.map(p => p._id);
+    await empleadoRole.save();
+    console.log('  ✓ Rol actualizado: Empleado');
   }
 
   // Rol de Contador - enfocado en reportes y nómina

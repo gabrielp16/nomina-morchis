@@ -24,7 +24,7 @@ export default function ActivityPage() {
       const response = await activityService.getAll(currentPage, 10, search);
       if (response.success && response.data) {
         setActivities(response.data.data);
-        setTotalPages(response.data.totalPages);
+        setTotalPages(response.data.pagination.totalPages);
       } else {
         // Si no hay datos, mostrar array vacío
         setActivities([]);

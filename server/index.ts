@@ -14,6 +14,8 @@ import roleRoutes from './routes/roles.js';
 import permissionRoutes from './routes/permissions.js';
 import activityRoutes from './routes/activity.js';
 import dashboardRoutes from './routes/dashboard.js';
+import employeeRoutes from './routes/employees.js';
+import payrollRoutes from './routes/payroll.js';
 
 // Import middleware
 import { errorHandler } from './middleware/errorHandler.js';
@@ -78,6 +80,8 @@ app.use('/api/roles', authLogger, roleRoutes);
 app.use('/api/permissions', authLogger, permissionRoutes);
 app.use('/api/activity', authLogger, activityRoutes);
 app.use('/api/dashboard', authLogger, dashboardRoutes);
+app.use('/api/employees', authLogger, employeeRoutes);
+app.use('/api/payroll', authLogger, payrollRoutes);
 
 // 404 handler
 app.use('*', (req, res) => {

@@ -36,7 +36,7 @@ export default function RolesPage() {
       const response = await roleService.getAll(currentPage, 10, search);
       if (response.success && response.data) {
         setRoles(response.data.data);
-        setTotalPages(response.data.totalPages);
+        setTotalPages(response.data.pagination.totalPages);
       } else {
         showError(response.error || 'Error al caargar los roles');
       }

@@ -31,6 +31,44 @@ export interface Permission {
   isActive: boolean;
 }
 
+// Tipos para empleados
+export interface Employee {
+  id: string;
+  user: User;
+  salarioPorHora: number;
+  isActive: boolean;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+// Tipos para nómina
+export interface Consumption {
+  valor: number;
+  descripcion: string;
+}
+
+export interface Payroll {
+  id: string;
+  employee: Employee;
+  fecha: Date;
+  horaInicio: string;
+  horaFin: string;
+  horasTrabajadas: number;
+  minutosTrabajados: number;
+  salarioBruto: number;
+  consumos: Consumption[];
+  totalConsumos: number;
+  deudaMorchis: number;
+  adelantoNomina: number;
+  totalDescuentos: number;
+  salarioNeto: number;
+  procesadoPor: User;
+  estado: 'PENDIENTE' | 'PROCESADA' | 'PAGADA';
+  observaciones?: string;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
 export interface ActivityLog {
   id: string;
   userId: string;
@@ -72,10 +110,12 @@ export interface ApiResponse<T> {
 
 export interface PaginatedResponse<T> {
   data: T[];
-  total: number;
-  page: number;
-  limit: number;
-  totalPages: number;
+  pagination: {
+    currentPage: number;
+    totalPages: number;
+    totalItems: number;
+    itemsPerPage: number;
+  };
 }
 
 // Formularios

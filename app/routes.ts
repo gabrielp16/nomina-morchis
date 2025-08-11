@@ -7,4 +7,6 @@ export default [
   route("/roles", "routes/roles.tsx"),
   route("/permissions", "routes/permissions.tsx"),
   route("/activity", "routes/activity.tsx"),
+  route("/employees", "routes/employees.tsx"),
+  route("/payroll", "routes/payroll.tsx"),
 ] satisfies RouteConfig;

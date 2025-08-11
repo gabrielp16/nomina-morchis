@@ -90,6 +90,9 @@ export const auth = async (req: AuthRequest, res: Response, next: NextFunction):
     const role = user.role as any;
     const permissions = role?.permisos?.map((p: any) => p.nombre) || [];
 
+    // Agregar permisos al objeto user para fácil acceso
+    (user as any).permissions = permissions;
+
     req.user = user;
     req.permissions = permissions;
     next();
