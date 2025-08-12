@@ -227,7 +227,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
 
   const hasRole = (role: string): boolean => {
     if (!user) return false;
-    return user.role === role || user.role === 'SUPER_ADMIN';
+    return user.role === role || user.role === 'Super Administrador';
   };
 
   const value: AuthContextType = {

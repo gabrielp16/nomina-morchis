@@ -1,5 +1,5 @@
 import { useState, useEffect, type ChangeEvent } from 'react';
-import { Plus, Search, Edit, Trash2, Calendar, Clock, DollarSign } from 'lucide-react';
+import { Plus, Search, Edit, Trash2, Calendar, Clock, DollarSign, Banknote } from 'lucide-react';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { Select } from '../components/ui/select';
@@ -13,6 +13,7 @@ import type { Payroll, Employee } from '../types/auth';
 import { CreatePayrollModal } from '../components/payroll/CreatePayrollModal';
 import { EditPayrollModal } from '../components/payroll/EditPayrollModal';
 import { PayrollDetailsModal } from '../components/payroll/PayrollDetailsModal';
+import { PayrollPaymentModal } from '../components/payroll/PayrollPaymentModal';
 import { ConfirmDialog } from '../components/ui/ConfirmDialog';
 
 export default function PayrollPage() {
@@ -33,6 +34,7 @@ export default function PayrollPage() {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [showDetailsModal, setShowDetailsModal] = useState(false);
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [selectedPayroll, setSelectedPayroll] = useState<Payroll | null>(null);
   const { confirm, confirmState, handleConfirm, handleCancel } = useConfirm();
   const { success, error: showError } = useToast();
@@ -210,7 +212,20 @@ export default function PayrollPage() {
                   </div>
                 )}
               </div>
-              <div className="mt-4 flex md:mt-0 md:ml-4">
+              <div className="mt-4 flex space-x-3 md:mt-0 md:ml-4">
+                {/* Botón Pagar nómina - Solo para Super Administrador */}
+                {isAdmin && (
+                  <Button
+                    onClick={() => setShowPaymentModal(true)}
+                    variant="outline"
+                    className="inline-flex items-center"
+                  >
+                    <Banknote className="h-4 w-4 mr-2" />
+                    Pagar Nómina
+                  </Button>
+                )}
+                
+                {/* Botón Nueva Nómina / Registrar Día de Trabajo */}
                 {hasPermission('CREATE_PAYROLL') && (isAdmin || isEmployee) && (
                   <Button
                     onClick={() => setShowCreateModal(true)}
@@ -572,6 +587,14 @@ export default function PayrollPage() {
           isOpen={showDetailsModal}
           onClose={() => setShowDetailsModal(false)}
           payroll={selectedPayroll}
+        />
+      )}
+
+      {/* Payment Modal */}
+      {showPaymentModal && (
+        <PayrollPaymentModal
+          isOpen={showPaymentModal}
+          onClose={() => setShowPaymentModal(false)}
         />
       )}
 
