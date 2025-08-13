@@ -130,7 +130,7 @@ export function EditRoleModal({ isOpen, onClose, onSuccess, role }: EditRoleModa
         {/* Overlay */}
       <div 
         className={cn(
-          'fixed inset-0 bg-black/50 z-40 transition-opacity',
+          'fixed inset-0 bg-black/50 z-40 transition-opacity opacity-100 flex items-center justify-center p-4 z-50',
           isOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'
         )}
         onClick={handleClose}

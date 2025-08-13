@@ -127,35 +127,41 @@ export function PayrollPaymentModal({ isOpen, onClose }: PayrollPaymentModalProp
       <head>
         <title>Nómina ${quincenaTitle} - ${employee.user?.nombre} ${employee.user?.apellido}</title>
         <style>
-          body { font-family: Arial, sans-serif; margin: 20px; }
-          h1 { color: #333; text-align: center; }
-          h2 { color: #666; }
-          table { width: 100%; border-collapse: collapse; margin: 20px 0; }
+          body { font-family: Arial, sans-serif; margin: 10px; }
+          h1 { color: #333; text-align: center; margin: 10px; font-size: 1.5em; }
+          h2 { color: #666; margin: 0; text-align: center; font-size: 1.2em; font-weight: 100; }
+          table { width: 100%; border-collapse: collapse; margin: 20px auto; }
           th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
           th { background-color: #f5f5f5; }
           .text-right { text-align: right; }
+          .text-left { text-align: left; }
+          .text-center { text-align: center; }
           .green { color: #16a34a; }
           .red { color: #dc2626; }
+          .periodo { color: #666; font-size: 1em; line-height: 1.5; padding: 4px; margin: 0; text-align: center; }
           .totals { background-color: #f9f9f9; font-weight: bold; }
+          .data-field { font-size:12px; line-height: 1.5; padding: 4px;}
+          .header-field { font-size:12px; line-height: 1.5; padding: 4px; text-align: center;}
+          .footer-field { font-size:12px; line-height: 1.5; padding: 4px;}
         </style>
       </head>
       <body>
         <h1>Nómina ${quincenaTitle}</h1>
         <h2>Empleado: ${employee.user?.nombre} ${employee.user?.apellido}</h2>
-        <p>Período: ${getMonthName(month)} ${year}</p>
-        
+        <p class="periodo">Período: ${getMonthName(month)} ${year}</p>
+
         <table>
           <thead>
             <tr>
-              <th>Día</th>
-              <th>Entrada</th>
-              <th>Salida</th>
-              <th>Horas</th>
-              <th>Valor horas</th>
-              <th>Consumos</th>
-              <th>Adelantos</th>
-              <th>Deudas Morchis</th>
-              <th>Salario</th>
+              <th class="header-field">Día</th>
+              <th class="header-field">Entrada</th>
+              <th class="header-field">Salida</th>
+              <th class="header-field">Horas</th>
+              <th class="header-field">Valor horas</th>
+              <th class="header-field">Consumos</th>
+              <th class="header-field">Adelantos</th>
+              <th class="header-field">Deudas Morchis</th>
+              <th class="header-field">Salario</th>
             </tr>
           </thead>
           <tbody>
@@ -166,28 +172,28 @@ export function PayrollPaymentModal({ isOpen, onClose }: PayrollPaymentModalProp
               
               return `
                 <tr>
-                  <td>${formatDay(payroll.fecha)}</td>
-                  <td>${formatTime(payroll.horaInicio)}</td>
-                  <td>${formatTime(payroll.horaFin)}</td>
-                  <td>${payroll.horasTrabajadas}h ${payroll.minutosTrabajados}m</td>
-                  <td class="text-right">${formatCurrency(payroll.salarioBruto)}</td>
-                  <td class="text-right">${formatCurrency(totalConsumos)}</td>
-                  <td class="text-right">${formatCurrency(payroll.adelantoNomina)}</td>
-                  <td class="text-right">${formatCurrency(payroll.deudaMorchis)}</td>
-                  <td class="text-right">${formatCurrency(calculateDailyValue(payroll))}</td>
+                  <td class="data-field text-center">${formatDay(payroll.fecha)}</td>
+                  <td class="data-field text-right">${formatTime(payroll.horaInicio)}</td>
+                  <td class="data-field text-right">${formatTime(payroll.horaFin)}</td>
+                  <td class="data-field text-center">${payroll.horasTrabajadas}h ${payroll.minutosTrabajados}m</td>
+                  <td class="text-right data-field">${formatCurrency(payroll.salarioBruto)}</td>
+                  <td class="text-right data-field">${formatCurrency(totalConsumos)}</td>
+                  <td class="text-right data-field">${formatCurrency(payroll.adelantoNomina)}</td>
+                  <td class="text-right data-field">${formatCurrency(payroll.deudaMorchis)}</td>
+                  <td class="text-right data-field">${formatCurrency(calculateDailyValue(payroll))}</td>
                 </tr>
               `;
             }).join('')}
           </tbody>
           <tfoot class="totals">
             <tr>
-              <td colspan="3">TOTALES:</td>
-              <td>${horasTotales}h ${minutosTotales}m</td>
-              <td class="text-right green">${formatCurrency(totales.salarioBruto)}</td>
-              <td class="text-right red">-${formatCurrency(totales.totalConsumos)}</td>
-              <td class="text-right red">-${formatCurrency(totales.adelantos)}</td>
-              <td class="text-right green">${formatCurrency(totales.deudas)}</td>
-              <td class="text-right">${formatCurrency(totales.salarioNeto)}</td>
+              <td class="footer-field" colspan="3">TOTALES:</td>
+              <td class="footer-field text-center">${horasTotales}h ${minutosTotales}m</td>
+              <td class="text-right green footer-field">${formatCurrency(totales.salarioBruto)}</td>
+              <td class="text-right red footer-field">-${formatCurrency(totales.totalConsumos)}</td>
+              <td class="text-right red footer-field">-${formatCurrency(totales.adelantos)}</td>
+              <td class="text-right green footer-field">${formatCurrency(totales.deudas)}</td>
+              <td class="text-right footer-field">${formatCurrency(totales.salarioNeto)}</td>
             </tr>
           </tfoot>
         </table>
@@ -339,9 +345,9 @@ export function PayrollPaymentModal({ isOpen, onClose }: PayrollPaymentModalProp
   };
 
   const generateYearOptions = () => {
-    const currentYear = new Date().getFullYear();
+    const currentYear = 2025;
     const years = [];
-    for (let i = currentYear - 2; i <= currentYear + 1; i++) {
+    for (let i = currentYear; i <= currentYear + 10; i++) {
       years.push(
         <option key={i} value={i.toString()}>
           {i}
@@ -515,7 +521,7 @@ export function PayrollPaymentModal({ isOpen, onClose }: PayrollPaymentModalProp
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+    <div className="fixed inset-0 bg-black/50 z-40 transition-opacity opacity-100 flex items-center justify-center p-4 z-50">
       <div className="bg-white rounded-lg max-w-6xl w-full max-h-[90vh] overflow-y-auto">
         <div className="flex items-center justify-between p-6 border-b border-gray-300">
           <h3 className="text-lg font-medium text-gray-900 flex items-center">
@@ -631,27 +637,6 @@ export function PayrollPaymentModal({ isOpen, onClose }: PayrollPaymentModalProp
                 Selecciona un empleado para ver su resumen de nómina
               </p>
             </div>
-          )}
-        </div>
-
-        <div className="flex justify-end space-x-3 p-6 border-t border-gray-300">
-          <Button
-            type="button"
-            variant="outline"
-            onClick={onClose}
-          >
-            Cerrar
-          </Button>
-          {selectedEmployee && monthlyData && monthlyData.totalMensual > 0 && (
-            <Button
-              type="button"
-              onClick={() => {
-                // TODO: Implementar funcionalidad de confirmar pago
-                console.log('Confirmar pago para empleado:', selectedEmployee);
-              }}
-            >
-              Confirmar Pago
-            </Button>
           )}
         </div>
       </div>
