@@ -334,7 +334,7 @@ export function EditPayrollModal({
                 </label>
                 <Input
                   type="number"
-                  step="100"
+                  step="50"
                   min="0"
                   {...register('adelantoNomina', { valueAsNumber: true })}
                   placeholder="0"
