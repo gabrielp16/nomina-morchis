@@ -413,16 +413,23 @@ npm run build
 # Configurar GitHub Actions para deploy automático
 ```
 
-### **Docker**
-```dockerfile
-FROM node:18-alpine
-WORKDIR /app
-COPY package*.json ./
-RUN npm install
-COPY . .
-RUN npm run build
-EXPOSE 3000
-CMD ["npm", "run", "preview"]
+### **Desarrollo Local**
+```bash
+# Prerequisitos: MongoDB instalado y ejecutándose
+# 1. Instalar dependencias
+npm run install:all
+
+# 2. Configurar variables de entorno
+cp .env.example .env
+# Editar .env con tus valores
+
+# 3. Inicializar base de datos
+npm run backend:seed
+
+# 4. Iniciar en modo desarrollo
+npm run start:local
+# O manualmente:
+npm run start:simple
 ```
 
 ## 🧪 Testing (Preparado para implementar)
