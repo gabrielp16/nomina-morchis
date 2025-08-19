@@ -4,12 +4,6 @@ import mongoose from 'mongoose';
 const LOCAL_DB = 'mongodb://localhost:27017/morchis-nomina';
 const ATLAS_DB = 'mongodb+srv://gabrielp16:Sun$tudi024@cluster0.ndzbaxv.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0';
 
-// Script simple de migración usando mongoose directo
-import mongoose from 'mongoose';
-
-const LOCAL_DB = 'mongodb://localhost:27017/morchis-nomina';
-const ATLAS_DB = 'mongodb+srv://gabrielp16:Sun$tudi024@cluster0.ndzbaxv.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0';
-
 async function migrateData() {
     let localConnection = null;
     let atlasConnection = null;
