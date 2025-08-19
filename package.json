@@ -3,7 +3,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "build": "react-router build",
+    "build": "npx react-router build",
     "dev": "react-router dev",
     "start": "react-router-serve ./build/server/index.js",
     "typecheck": "react-router typegen && tsc",
@@ -14,7 +14,7 @@
     "backend:seed": "cd server && npm run seed",
     "dev:all": "concurrently \"npm run dev\" \"npm run backend:dev\"",
     "install:all": "npm install && npm run backend:install",
-    "build:vercel": "npm install && npm run backend:install && npm run build",
+    "build:vercel": "npm install && npx react-router build",
     "deploy:vercel": "vercel --prod"
   },
   "dependencies": {
@@ -23,7 +23,7 @@
     "@hookform/resolvers": "^5.2.1",
     "@react-router/node": "^7.7.1",
     "@react-router/serve": "^7.7.1",
-    "@vercel/node": "^3.0.0",
+    "@vercel/node": "^4.0.0",
     "axios": "^1.11.0",
     "bcryptjs": "^3.0.2",
     "clsx": "^2.1.1",
