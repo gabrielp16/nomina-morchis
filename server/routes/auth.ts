@@ -382,4 +382,109 @@ router.get('/status', asyncHandler(async (req: Request, res: Response) => {
   });
 }));
 
+// @route   POST /api/auth/fix-database
+// @desc    TEMPORARY - Fix database with proper user/role data
+// @access  Public (remove after fixing)
+router.post('/fix-database', asyncHandler(async (req: Request, res: Response) => {
+  console.log('🔧 Starting database fix...');
+  
+  try {
+    const bcrypt = await import('bcrypt');
+    
+    // Clean existing data
+    console.log('🧹 Cleaning existing data...');
+    await User.deleteMany({});
+    await Role.deleteMany({});
+    await Permission.deleteMany({});
+
+    // Create permissions first
+    console.log('🔐 Creating permissions...');
+    const permissions = await Permission.create([
+      {
+        nombre: 'Gestión de Usuarios',
+        descripcion: 'Crear, editar, eliminar y ver usuarios',
+        modulo: 'usuarios',
+        accion: 'MANAGE'
+      },
+      {
+        nombre: 'Gestión de Roles',
+        descripcion: 'Crear, editar, eliminar y ver roles',
+        modulo: 'roles',
+        accion: 'MANAGE'
+      },
+      {
+        nombre: 'Gestión de Permisos',
+        descripcion: 'Crear, editar, eliminar y ver permisos',
+        modulo: 'permisos',
+        accion: 'MANAGE'
+      },
+      {
+        nombre: 'Dashboard',
+        descripcion: 'Acceso al panel principal',
+        modulo: 'dashboard',
+        accion: 'READ'
+      }
+    ]);
+
+    console.log(`✅ Created ${permissions.length} permissions`);
+
+    // Create admin role
+    console.log('🎭 Creating admin role...');
+    const adminRole = await Role.create({
+      nombre: 'Administrador',
+      descripcion: 'Rol con acceso completo al sistema',
+      permisos: permissions.map((p: any) => p._id),
+      isActive: true
+    });
+
+    console.log(`✅ Admin role created with ID: ${adminRole._id}`);
+
+    // Create admin user (let User model handle password hashing)
+    console.log('👤 Creating admin user...');
+    const adminUser = await User.create({
+      nombre: 'Administrador',
+      apellido: 'Sistema',
+      correo: 'admin@morchis.com',
+      numeroCelular: '+51999999999',
+      password: 'admin123', // Raw password - let User model hash it
+      role: adminRole._id,
+      isActive: true,
+      authProvider: 'local'
+    });
+
+    console.log(`✅ Admin user created with ID: ${adminUser._id}`);
+
+    // Verify the data
+    console.log('🔍 Verifying data...');
+    const userWithRole = await User.findById(adminUser._id).populate('role');
+    if (!userWithRole) {
+      throw new Error('User verification failed');
+    }
+
+    console.log('✅ Database fix completed!');
+    
+    res.json({
+      success: true,
+      message: 'Database fixed successfully!',
+      data: {
+        userId: adminUser._id,
+        roleId: adminRole._id,
+        permissionsCount: permissions.length,
+        credentials: {
+          email: 'admin@morchis.com',
+          password: 'admin123'
+        }
+      }
+    });
+    
+  } catch (error) {
+    console.error('❌ Error fixing database:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to fix database',
+      error: error instanceof Error ? error.message : 'Unknown error'
+    });
+  }
+}));
+
 export default router;
