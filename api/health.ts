@@ -12,17 +12,14 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   try {
     return res.status(200).json({ 
-      message: 'Sistema de Nómina API - Vercel Functions',
-      endpoints: {
-        health: '/api/health',
-        login: '/api/auth/login'
-      },
-      status: 'running',
-      timestamp: new Date().toISOString()
+      status: 'OK', 
+      timestamp: new Date().toISOString(),
+      message: 'Sistema de Nómina API is running on Vercel',
+      environment: process.env.NODE_ENV || 'development'
     });
     
   } catch (error) {
-    console.error('Error handling request:', error);
+    console.error('Error handling health check:', error);
     return res.status(500).json({ 
       error: 'Internal server error',
       message: error instanceof Error ? error.message : 'Unknown error'
