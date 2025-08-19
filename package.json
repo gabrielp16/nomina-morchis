@@ -3,8 +3,8 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "build": "npx react-router build",
-    "dev": "react-router dev",
+    "build": "npx @react-router/dev build",
+    "dev": "npx @react-router/dev dev",
     "start": "react-router-serve ./build/server/index.js",
     "typecheck": "react-router typegen && tsc",
     "backend:install": "cd server && npm install",
@@ -14,7 +14,7 @@
     "backend:seed": "cd server && npm run seed",
     "dev:all": "concurrently \"npm run dev\" \"npm run backend:dev\"",
     "install:all": "npm install && npm run backend:install",
-    "build:vercel": "npm install && npx react-router build",
+    "build:vercel": "npm install && npx @react-router/dev build",
     "deploy:vercel": "vercel --prod"
   },
   "dependencies": {
