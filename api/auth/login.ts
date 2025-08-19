@@ -3,7 +3,7 @@ import mongoose from 'mongoose';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 
-// Definir el esquema del usuario directamente para evitar problemas de importación
+// Definir el esquema del usuario
 const userSchema = new mongoose.Schema({
   nombre: { type: String, required: true },
   apellido: { type: String, required: true },
@@ -16,7 +16,6 @@ const userSchema = new mongoose.Schema({
   authProvider: { type: String, enum: ['local', 'google'], default: 'local' }
 }, { timestamps: true });
 
-// Verificar si el modelo ya existe antes de crearlo
 const User = mongoose.models.User || mongoose.model('User', userSchema);
 
 let isConnected = false;
