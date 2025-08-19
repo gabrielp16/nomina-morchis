@@ -71,23 +71,39 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       });
     }
 
-    // Buscar usuario
-    const user = await User.findOne({ correo }).populate('role');
+    // Buscar usuario con authProvider local específicamente
+    console.log('Buscando usuario con email:', correo);
+    const user = await User.findOne({ 
+      correo, 
+      authProvider: 'local' 
+    }).populate('role');
+
+    console.log('Usuario encontrado:', user ? 'Sí' : 'No');
+    if (user) {
+      console.log('User details:', {
+        id: user._id,
+        email: user.correo,
+        authProvider: user.authProvider,
+        isActive: user.isActive
+      });
+    }
 
     if (!user) {
       return res.status(401).json({
         success: false,
-        message: 'Credenciales inválidas'
+        message: 'Credenciales inválidas - Usuario no encontrado'
       });
     }
 
     // Verificar password
+    console.log('Verificando password...');
     const isPasswordValid = await bcrypt.compare(password, user.password);
+    console.log('Password válido:', isPasswordValid);
 
     if (!isPasswordValid) {
       return res.status(401).json({
         success: false,
-        message: 'Credenciales inválidas'
+        message: 'Credenciales inválidas - Password incorrecto'
       });
     }
 
@@ -135,7 +151,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(500).json({
       success: false,
       message: 'Error interno del servidor',
-      error: process.env.NODE_ENV === 'development' ? error.message : undefined
+      error: process.env.NODE_ENV === 'development' ? (error instanceof Error ? error.message : 'Unknown error') : undefined
     });
   }
 }
