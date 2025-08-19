@@ -11,6 +11,26 @@ import { activityLogger } from '../middleware/activityLogger.js';
 
 const router = express.Router();
 
+// Función auxiliar para calcular horas trabajadas
+const calculateWorkTime = (horaInicio: string, horaFin: string) => {
+  const [inicioHora, inicioMinuto] = horaInicio.split(':').map(Number);
+  const [finHora, finMinuto] = horaFin.split(':').map(Number);
+  
+  const inicioEnMinutos = inicioHora * 60 + inicioMinuto;
+  let finEnMinutos = finHora * 60 + finMinuto;
+  
+  // Si la hora de fin es menor, asumimos que es al día siguiente
+  if (finEnMinutos < inicioEnMinutos) {
+    finEnMinutos += 24 * 60;
+  }
+  
+  const totalMinutos = finEnMinutos - inicioEnMinutos;
+  const horas = Math.floor(totalMinutos / 60);
+  const minutos = totalMinutos % 60;
+  
+  return { horas, minutos };
+};
+
 // Función auxiliar para verificar si el usuario es empleado y obtener su ID de empleado
 const getEmployeeIdForUser = async (userId: string): Promise<string | null> => {
   const employee = await Employee.findOne({ user: userId, isActive: true });
@@ -126,7 +146,7 @@ const updatePayrollValidation = [
 // Función helper para calcular valores de nómina
 function calculatePayrollValues(employee: any, horaInicio: string, horaFin: string, consumos: any[], deudaMorchis: number = 0, adelantoNomina: number = 0) {
   // Calcular horas trabajadas
-  const timeResult = Payroll.calculateWorkTime(horaInicio, horaFin);
+  const timeResult = calculateWorkTime(horaInicio, horaFin);
   const { horas, minutos } = timeResult;
   
   // Calcular salario bruto

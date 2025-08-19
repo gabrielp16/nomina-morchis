@@ -19,7 +19,7 @@ const createEmployeeForJuan = async (): Promise<void> => {
       return;
     }
     
-    console.log(`✅ Usuario encontrado: ${(juanUser as any).nombre} ${(juanUser as any).apellido}`);
+    console.log(`✅ Usuario encontrado: ${juanUser.nombre} ${juanUser.apellido}`);
     
     // Check if employee record already exists
     const existingEmployee = await Employee.findOne({ user: juanUser._id });
@@ -34,16 +34,15 @@ const createEmployeeForJuan = async (): Promise<void> => {
     const newEmployee = new Employee({
       user: juanUser._id,
       salarioPorHora: 5000, // Salario por defecto de $5000/hora
-      fechaIngreso: new Date(),
       isActive: true
     });
     
     await newEmployee.save();
     
     console.log('✅ Registro de empleado creado exitosamente');
-    console.log(`   Usuario: ${(juanUser as any).nombre} ${(juanUser as any).apellido} (${(juanUser as any).correo})`);
+    console.log(`   Usuario: ${juanUser.nombre} ${juanUser.apellido} (${juanUser.correo})`);
     console.log(`   Salario: $${newEmployee.salarioPorHora}/hora`);
-    console.log(`   Fecha de ingreso: ${newEmployee.fechaIngreso.toISOString().split('T')[0]}`);
+    console.log(`   Fecha de creación: ${newEmployee.createdAt.toISOString().split('T')[0]}`);
     
   } catch (error) {
     console.error('❌ Error:', error);

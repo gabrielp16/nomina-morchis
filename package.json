@@ -13,7 +13,9 @@
     "backend:start": "cd server && npm start",
     "backend:seed": "cd server && npm run seed",
     "dev:all": "concurrently \"npm run dev\" \"npm run backend:dev\"",
-    "install:all": "npm install && npm run backend:install"
+    "install:all": "npm install && npm run backend:install",
+    "build:vercel": "npm run build && npm run backend:build",
+    "deploy:vercel": "vercel --prod"
   },
   "dependencies": {
     "@auth0/auth0-react": "^2.4.0",
@@ -34,6 +36,7 @@
     "isbot": "^5.1.27",
     "jsonwebtoken": "^9.0.2",
     "lucide-react": "^0.536.0",
+    "mongodb": "^6.18.0",
     "mongoose": "^8.17.0",
     "morgan": "^1.10.1",
     "react": "^19.1.0",
