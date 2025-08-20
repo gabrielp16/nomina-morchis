@@ -262,7 +262,19 @@ export function PayrollPaymentModal({ isOpen, onClose }: PayrollPaymentModalProp
     const segundaQuincenaPayrolls: Payroll[] = [];
 
     payrolls.forEach(payroll => {
-      const day = new Date(payroll.fecha).getDate();
+      let day: number;
+      
+      // Convertir a string para verificar si es ISO
+      const fechaStr = String(payroll.fecha);
+      
+      if (fechaStr.includes('T') || fechaStr.includes('Z')) {
+        // Es un string ISO, extraer el día directamente
+        const datePart = fechaStr.split('T')[0];
+        day = parseInt(datePart.split('-')[2], 10);
+      } else {
+        day = new Date(payroll.fecha).getDate();
+      }
+      
       if (day <= 15) {
         primeraQuincenaPayrolls.push(payroll);
       } else {
@@ -312,6 +324,15 @@ export function PayrollPaymentModal({ isOpen, onClose }: PayrollPaymentModalProp
   };
 
   const formatDay = (date: string | Date) => {
+    const dateStr = String(date);
+    
+    if (dateStr.includes('T') || dateStr.includes('Z')) {
+      // Es un string ISO, extraer el día directamente para evitar conversión de timezone
+      const datePart = dateStr.split('T')[0];
+      const day = datePart.split('-')[2];
+      return day;
+    }
+    
     const d = new Date(date);
     return d.getDate().toString().padStart(2, '0');
   };

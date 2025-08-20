@@ -56,6 +56,19 @@ export function EditPayrollModal({
   });
   const { success, error: showError } = useToast();
 
+  // Función para convertir fecha del payroll al formato del input
+  const formatDateForInput = (date: string | Date) => {
+    const dateStr = String(date);
+    
+    if (dateStr.includes('T') || dateStr.includes('Z')) {
+      // Es un string ISO, extraer solo la parte de la fecha
+      return dateStr.split('T')[0];
+    }
+    
+    // Si no es ISO, convertir usando Date
+    return new Date(date).toISOString().split('T')[0];
+  };
+
   const {
     register,
     handleSubmit,
@@ -66,7 +79,7 @@ export function EditPayrollModal({
   } = useForm<EditPayrollFormData>({
     resolver: zodResolver(editPayrollSchema),
     defaultValues: {
-      fecha: new Date(payroll.fecha).toISOString().split('T')[0],
+      fecha: formatDateForInput(payroll.fecha),
       horaInicio: payroll.horaInicio,
       horaFin: payroll.horaFin,
       consumos: payroll.consumos,
@@ -91,7 +104,7 @@ export function EditPayrollModal({
   useEffect(() => {
     if (isOpen) {
       reset({
-        fecha: new Date(payroll.fecha).toISOString().split('T')[0],
+        fecha: formatDateForInput(payroll.fecha),
         horaInicio: payroll.horaInicio,
         horaFin: payroll.horaFin,
         consumos: payroll.consumos,
