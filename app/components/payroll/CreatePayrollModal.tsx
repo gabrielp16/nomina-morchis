@@ -85,9 +85,13 @@ export function CreatePayrollModal({
         // Para vista de empleado, cargar el empleado específico
         loadSingleEmployee(defaultEmployeeId);
       }
+      // Formatear fecha actual en formato YYYY-MM-DD para el input type="date"
+      const today = new Date();
+      const formattedDate = today.toISOString().split('T')[0];
+      
       reset({
         employeeId: defaultEmployeeId || '',
-        fecha: new Date().toISOString().split('T')[0],
+        fecha: formattedDate,
         horaInicio: '',
         horaFin: '',
         consumos: [],
@@ -267,6 +271,29 @@ export function CreatePayrollModal({
     }).format(value);
   };
 
+  const formatDate = (dateInput: string | Date) => {
+    if (typeof dateInput === 'string') {
+      // Si es un string ISO, extraer la fecha directamente sin conversión de zona horaria
+      if (dateInput.includes('T') || dateInput.includes('Z')) {
+        // Para fechas ISO como "2025-09-01T00:00:00.000Z"
+        const datePart = dateInput.split('T')[0];
+        const [year, month, day] = datePart.split('-');
+        return `${year}/${month}/${day}`;
+      } else {
+        // Para fechas en formato "YYYY-MM-DD"
+        const [year, month, day] = dateInput.split('-');
+        return `${year}/${month}/${day}`;
+      }
+    }
+    
+    // Si es un objeto Date, usar el método anterior
+    const date = dateInput;
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}/${month}/${day}`;
+  };
+
   if (!isOpen) return null;
 
   return (
@@ -321,14 +348,18 @@ export function CreatePayrollModal({
               {/* Fecha */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Fecha (YYYY/MM/DD) *
+                  Fecha *
                 </label>
                 <Input
                   type="date"
                   {...register('fecha')}
                   disabled={isLoading}
-                  placeholder="YYYY/MM/DD"
                 />
+                {watch('fecha') && (
+                  <p className="mt-1 text-xs text-gray-500">
+                    Se mostrará como: {formatDate(watch('fecha'))}
+                  </p>
+                )}
                 {errors.fecha && (
                   <p className="mt-1 text-sm text-red-600">{errors.fecha.message}</p>
                 )}

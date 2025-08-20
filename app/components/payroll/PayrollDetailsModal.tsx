@@ -42,6 +42,12 @@ export function PayrollDetailsModal({ isOpen, onClose, payroll }: PayrollDetails
   };
 
   const formatDate = (dateInput: string | Date) => {
+    if (typeof dateInput === 'string' && (dateInput.includes('T') || dateInput.includes('Z'))) {
+      // Es un string ISO, parsear directamente para evitar conversión de timezone
+      const dateParts = dateInput.split('T')[0].split('-');
+      return `${dateParts[0]}/${dateParts[1]}/${dateParts[2]}`;
+    }
+    
     const date = typeof dateInput === 'string' ? new Date(dateInput) : dateInput;
     const year = date.getFullYear();
     const month = String(date.getMonth() + 1).padStart(2, '0');
@@ -50,6 +56,17 @@ export function PayrollDetailsModal({ isOpen, onClose, payroll }: PayrollDetails
   };
 
   const formatDateTime = (dateInput: string | Date) => {
+    if (typeof dateInput === 'string' && (dateInput.includes('T') || dateInput.includes('Z'))) {
+      // Para timestamps ISO, usar Date para mantener la hora correcta
+      const date = new Date(dateInput);
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, '0');
+      const day = String(date.getDate()).padStart(2, '0');
+      const hours = String(date.getHours()).padStart(2, '0');
+      const minutes = String(date.getMinutes()).padStart(2, '0');
+      return `${year}/${month}/${day} ${hours}:${minutes}`;
+    }
+    
     const date = typeof dateInput === 'string' ? new Date(dateInput) : dateInput;
     const year = date.getFullYear();
     const month = String(date.getMonth() + 1).padStart(2, '0');

@@ -162,7 +162,22 @@ export default function PayrollPage() {
   };
 
   const formatDate = (dateInput: string | Date) => {
-    const date = typeof dateInput === 'string' ? new Date(dateInput) : dateInput;
+    if (typeof dateInput === 'string') {
+      // Si es un string ISO, extraer la fecha directamente sin conversión de zona horaria
+      if (dateInput.includes('T') || dateInput.includes('Z')) {
+        // Para fechas ISO como "2025-09-01T00:00:00.000Z"
+        const datePart = dateInput.split('T')[0];
+        const [year, month, day] = datePart.split('-');
+        return `${year}/${month}/${day}`;
+      } else {
+        // Para fechas en formato "YYYY-MM-DD"
+        const [year, month, day] = dateInput.split('-');
+        return `${year}/${month}/${day}`;
+      }
+    }
+    
+    // Si es un objeto Date, usar el método anterior
+    const date = dateInput;
     const year = date.getFullYear();
     const month = String(date.getMonth() + 1).padStart(2, '0');
     const day = String(date.getDate()).padStart(2, '0');
