@@ -26,7 +26,7 @@ export function PayrollDetailsModal({ isOpen, onClose, payroll }: PayrollDetails
   const totalConsumosCalculado = subtotalConsumos - descuentoConsumos;
   
   // Calcular salario neto para verificación
-  const salarioNetoCalculado = payroll.salarioBruto - totalConsumosCalculado - payroll.adelantoNomina + payroll.deudaMorchis;
+  const salarioNetoCalculado = payroll.salarioBruto - totalConsumosCalculado - payroll.adelantoNomina - (payroll.descuadre || 0) + payroll.deudaMorchis;
 
   const formatTime = (time: string) => {
     if (!time) return '';
@@ -191,6 +191,12 @@ export function PayrollDetailsModal({ isOpen, onClose, payroll }: PayrollDetails
                   <span className="text-sm text-gray-500">Adelanto nómina:</span>
                   <span className="text-sm font-medium text-red-600">
                     -{formatCurrency(payroll.adelantoNomina)}
+                  </span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-sm text-gray-500">Descuadre:</span>
+                  <span className="text-sm font-medium text-red-600">
+                    -{formatCurrency(payroll.descuadre || 0)}
                   </span>
                 </div>
                 <div className="flex justify-between">

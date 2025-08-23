@@ -136,6 +136,9 @@ export const payrollSchema = z.object({
   adelantoNomina: z
     .number()
     .min(0, 'El adelanto debe ser positivo'),
+  descuadre: z
+    .number()
+    .min(0, 'El descuadre debe ser positivo'),
   observaciones: z
     .string()
     .max(500, 'Las observaciones no pueden exceder 500 caracteres')

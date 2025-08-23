@@ -60,6 +60,7 @@ export interface Payroll {
   totalConsumos: number;
   deudaMorchis: number;
   adelantoNomina: number;
+  descuadre: number;
   totalDescuentos: number;
   salarioNeto: number;
   procesadoPor: User;

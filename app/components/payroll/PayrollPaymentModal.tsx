@@ -106,14 +106,16 @@ export function PayrollPaymentModal({ isOpen, onClose }: PayrollPaymentModalProp
         salarioBruto: acc.salarioBruto + payroll.salarioBruto,
         totalConsumos: acc.totalConsumos + totalConsumos,
         adelantos: acc.adelantos + payroll.adelantoNomina,
+        descuadres: acc.descuadres + (payroll.descuadre || 0),
         deudas: acc.deudas + payroll.deudaMorchis,
-        salarioNeto: acc.salarioNeto + (payroll.salarioBruto - totalConsumos - payroll.adelantoNomina + payroll.deudaMorchis)
+        salarioNeto: acc.salarioNeto + (payroll.salarioBruto - totalConsumos - payroll.adelantoNomina - (payroll.descuadre || 0) + payroll.deudaMorchis)
       };
     }, {
       totalMinutos: 0,
       salarioBruto: 0,
       totalConsumos: 0,
       adelantos: 0,
+      descuadres: 0,
       deudas: 0,
       salarioNeto: 0
     });
@@ -160,6 +162,7 @@ export function PayrollPaymentModal({ isOpen, onClose }: PayrollPaymentModalProp
               <th class="header-field">Valor horas</th>
               <th class="header-field">Consumos</th>
               <th class="header-field">Adelantos</th>
+              <th class="header-field">Descuadre</th>
               <th class="header-field">Deudas Morchis</th>
               <th class="header-field">Salario</th>
             </tr>
@@ -179,6 +182,7 @@ export function PayrollPaymentModal({ isOpen, onClose }: PayrollPaymentModalProp
                   <td class="text-right data-field">${formatCurrency(payroll.salarioBruto)}</td>
                   <td class="text-right data-field">${formatCurrency(totalConsumos)}</td>
                   <td class="text-right data-field">${formatCurrency(payroll.adelantoNomina)}</td>
+                  <td class="text-right data-field">${formatCurrency(payroll.descuadre || 0)}</td>
                   <td class="text-right data-field">${formatCurrency(payroll.deudaMorchis)}</td>
                   <td class="text-right data-field">${formatCurrency(calculateDailyValue(payroll))}</td>
                 </tr>
@@ -192,6 +196,7 @@ export function PayrollPaymentModal({ isOpen, onClose }: PayrollPaymentModalProp
               <td class="text-right green footer-field">${formatCurrency(totales.salarioBruto)}</td>
               <td class="text-right red footer-field">-${formatCurrency(totales.totalConsumos)}</td>
               <td class="text-right red footer-field">-${formatCurrency(totales.adelantos)}</td>
+              <td class="text-right red footer-field">-${formatCurrency(totales.descuadres)}</td>
               <td class="text-right green footer-field">${formatCurrency(totales.deudas)}</td>
               <td class="text-right footer-field">${formatCurrency(totales.salarioNeto)}</td>
             </tr>
@@ -287,7 +292,7 @@ export function PayrollPaymentModal({ isOpen, onClose }: PayrollPaymentModalProp
         const subtotalConsumos = payroll.consumos.reduce((s, c) => s + c.valor, 0);
         const descuentoConsumos = subtotalConsumos * 0.15;
         const totalConsumos = subtotalConsumos - descuentoConsumos;
-        return sum + (payroll.salarioBruto - totalConsumos - payroll.adelantoNomina + payroll.deudaMorchis);
+        return sum + (payroll.salarioBruto - totalConsumos - payroll.adelantoNomina - (payroll.descuadre || 0) + payroll.deudaMorchis);
       }, 0);
     };
 
@@ -341,7 +346,7 @@ export function PayrollPaymentModal({ isOpen, onClose }: PayrollPaymentModalProp
     const subtotalConsumos = payroll.consumos.reduce((sum, consumo) => sum + consumo.valor, 0);
     const descuentoConsumos = subtotalConsumos * 0.15;
     const totalConsumos = subtotalConsumos - descuentoConsumos;
-    return payroll.salarioBruto - totalConsumos - payroll.adelantoNomina + payroll.deudaMorchis;
+    return payroll.salarioBruto - totalConsumos - payroll.adelantoNomina - (payroll.descuadre || 0) + payroll.deudaMorchis;
   };
 
   const getMonthName = (month: string) => {
@@ -393,14 +398,16 @@ export function PayrollPaymentModal({ isOpen, onClose }: PayrollPaymentModalProp
         salarioBruto: acc.salarioBruto + payroll.salarioBruto,
         totalConsumos: acc.totalConsumos + totalConsumos,
         adelantos: acc.adelantos + payroll.adelantoNomina,
+        descuadres: acc.descuadres + (payroll.descuadre || 0),
         deudas: acc.deudas + payroll.deudaMorchis,
-        salarioNeto: acc.salarioNeto + (payroll.salarioBruto - totalConsumos - payroll.adelantoNomina + payroll.deudaMorchis)
+        salarioNeto: acc.salarioNeto + (payroll.salarioBruto - totalConsumos - payroll.adelantoNomina - (payroll.descuadre || 0) + payroll.deudaMorchis)
       };
     }, {
       totalMinutos: 0,
       salarioBruto: 0,
       totalConsumos: 0,
       adelantos: 0,
+      descuadres: 0,
       deudas: 0,
       salarioNeto: 0
     });
@@ -462,6 +469,9 @@ export function PayrollPaymentModal({ isOpen, onClose }: PayrollPaymentModalProp
                   Adelantos
                 </th>
                 <th className="px-2 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Descuadre
+                </th>
+                <th className="px-2 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Deudas Morchis
                 </th>
                 <th className="px-2 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -499,6 +509,9 @@ export function PayrollPaymentModal({ isOpen, onClose }: PayrollPaymentModalProp
                       {formatCurrency(payroll.adelantoNomina)}
                     </td>
                     <td className="px-2 py-1 whitespace-nowrap text-xs text-gray-900 text-right">
+                      {formatCurrency(payroll.descuadre || 0)}
+                    </td>
+                    <td className="px-2 py-1 whitespace-nowrap text-xs text-gray-900 text-right">
                       {formatCurrency(payroll.deudaMorchis)}
                     </td>
                     <td className="px-2 py-1 whitespace-nowrap text-xs font-medium text-gray-900 text-right">
@@ -524,6 +537,9 @@ export function PayrollPaymentModal({ isOpen, onClose }: PayrollPaymentModalProp
                 </td>
                 <td className="px-2 py-3 text-sm font-bold text-red-600 text-right">
                   -{formatCurrency(totales.adelantos)}
+                </td>
+                <td className="px-2 py-3 text-sm font-bold text-red-600 text-right">
+                  -{formatCurrency(totales.descuadres)}
                 </td>
                 <td className="px-2 py-3 text-sm font-bold text-green-600 text-right">
                   {formatCurrency(totales.deudas)}

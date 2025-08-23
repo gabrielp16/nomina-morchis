@@ -21,6 +21,7 @@ const editPayrollSchema = z.object({
   })),
   deudaMorchis: z.number().min(0, 'La deuda debe ser positiva'),
   adelantoNomina: z.number().min(0, 'El adelanto debe ser positivo'),
+  descuadre: z.number().min(0, 'El descuadre debe ser positivo'),
   estado: z.enum(['PENDIENTE', 'PROCESADA', 'PAGADA']),
   observaciones: z.string().max(500, 'Las observaciones no pueden exceder 500 caracteres').optional(),
 });
@@ -85,6 +86,7 @@ export function EditPayrollModal({
       consumos: payroll.consumos,
       deudaMorchis: payroll.deudaMorchis,
       adelantoNomina: payroll.adelantoNomina,
+      descuadre: payroll.descuadre || 0,
       estado: payroll.estado,
       observaciones: payroll.observaciones || ''
     }
@@ -100,6 +102,7 @@ export function EditPayrollModal({
   const consumos = watch('consumos');
   const deudaMorchis = watch('deudaMorchis');
   const adelantoNomina = watch('adelantoNomina');
+  const descuadre = watch('descuadre');
 
   useEffect(() => {
     if (isOpen) {
@@ -110,6 +113,7 @@ export function EditPayrollModal({
         consumos: payroll.consumos,
         deudaMorchis: payroll.deudaMorchis,
         adelantoNomina: payroll.adelantoNomina,
+        descuadre: payroll.descuadre || 0,
         estado: payroll.estado,
         observaciones: payroll.observaciones || ''
       });
@@ -157,7 +161,7 @@ export function EditPayrollModal({
     const descuentoConsumos = subtotalConsumos * 0.15;
     const totalConsumos = subtotalConsumos - descuentoConsumos;
     
-    const totalDescuentos = totalConsumos + (adelantoNomina || 0);
+    const totalDescuentos = totalConsumos + (adelantoNomina || 0) + (descuadre || 0);
     const salarioNeto = salarioBruto - totalDescuentos + (deudaMorchis || 0);
     
     setCalculatedValues({
@@ -170,7 +174,7 @@ export function EditPayrollModal({
       totalDescuentos,
       salarioNeto
     });
-  }, [horaInicio, horaFin, consumos, deudaMorchis, adelantoNomina, payroll.employee?.salarioPorHora]);
+  }, [horaInicio, horaFin, consumos, deudaMorchis, adelantoNomina, descuadre, payroll.employee?.salarioPorHora]);
 
   const onSubmit = async (data: EditPayrollFormData) => {
     setIsLoading(true);
@@ -385,6 +389,27 @@ export function EditPayrollModal({
                 )}
               </div>
 
+              {/* Descuadre */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Descuadre
+                </label>
+                <Input
+                  type="number"
+                  step="50"
+                  min="0"
+                  {...register('descuadre', { valueAsNumber: true })}
+                  placeholder="0"
+                  disabled={isLoading}
+                />
+                {errors.descuadre && (
+                  <p className="mt-1 text-sm text-red-600">{errors.descuadre.message}</p>
+                )}
+                <p className="mt-1 text-xs text-gray-500">
+                  Valor que hizo falta en el cierre contable del día
+                </p>
+              </div>
+
               {/* Observaciones */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -514,6 +539,12 @@ export function EditPayrollModal({
                     <span className="text-blue-800">Adelanto nómina:</span>
                     <span className="font-medium text-blue-900">
                       -{formatCurrency(watch('adelantoNomina') || 0)}
+                    </span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-blue-800">Descuadre:</span>
+                    <span className="font-medium text-blue-900">
+                      -{formatCurrency(watch('descuadre') || 0)}
                     </span>
                   </div>
                   <div className="flex justify-between">

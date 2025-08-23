@@ -60,6 +60,7 @@ export function CreatePayrollModal({
       consumos: [],
       deudaMorchis: 0,
       adelantoNomina: 0,
+      descuadre: 0,
       observaciones: ''
     }
   });
@@ -76,6 +77,7 @@ export function CreatePayrollModal({
   const consumos = watch('consumos');
   const deudaMorchis = watch('deudaMorchis');
   const adelantoNomina = watch('adelantoNomina');
+  const descuadre = watch('descuadre');
 
   useEffect(() => {
     if (isOpen) {
@@ -195,7 +197,7 @@ export function CreatePayrollModal({
     const totalConsumos = subtotalConsumos - descuentoConsumos;
     
     // Calcular descuentos totales
-    const totalDescuentos = totalConsumos + (adelantoNomina || 0);
+    const totalDescuentos = totalConsumos + (adelantoNomina || 0) + (descuadre || 0);
     
     // Calcular salario neto
     const salarioNeto = salarioBruto - totalDescuentos + (deudaMorchis || 0);
@@ -210,7 +212,7 @@ export function CreatePayrollModal({
       totalDescuentos,
       salarioNeto
     });
-  }, [isEmployeeView, defaultEmployeeId, employeeId, horaInicio, horaFin, consumos, deudaMorchis, adelantoNomina, employees]);
+  }, [isEmployeeView, defaultEmployeeId, employeeId, horaInicio, horaFin, consumos, deudaMorchis, adelantoNomina, descuadre, employees]);
 
   useEffect(() => {
     calculateValues();
@@ -431,6 +433,27 @@ export function CreatePayrollModal({
                 )}
               </div>
 
+              {/* Descuadre */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Descuadre
+                </label>
+                <Input
+                  type="number"
+                  step="50"
+                  min="0"
+                  {...register('descuadre', { valueAsNumber: true })}
+                  placeholder="0"
+                  disabled={isLoading}
+                />
+                {errors.descuadre && (
+                  <p className="mt-1 text-sm text-red-600">{errors.descuadre.message}</p>
+                )}
+                <p className="mt-1 text-xs text-gray-500">
+                  Valor que hizo falta en el cierre contable del día
+                </p>
+              </div>
+
               {/* Observaciones */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -558,6 +581,12 @@ export function CreatePayrollModal({
                     <span className="text-blue-800">Adelanto nómina:</span>
                     <span className="font-medium text-blue-900">
                       -{formatCurrency(watch('adelantoNomina') || 0)}
+                    </span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-blue-800">Descuadre:</span>
+                    <span className="font-medium text-blue-900">
+                      -{formatCurrency(watch('descuadre') || 0)}
                     </span>
                   </div>
                   <div className="flex justify-between">
