@@ -1,5 +1,5 @@
 import { useState, useEffect, type ChangeEvent } from 'react';
-import { Plus, Search, Edit, Trash2, Calendar, Clock, DollarSign, Banknote } from 'lucide-react';
+import { Plus, Search, Edit, Trash2, Calendar, Clock, DollarSign, Banknote, ChevronDown, ChevronRight } from 'lucide-react';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { Select } from '../components/ui/select';
@@ -36,6 +36,7 @@ export default function PayrollPage() {
   const [showDetailsModal, setShowDetailsModal] = useState(false);
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [selectedPayroll, setSelectedPayroll] = useState<Payroll | null>(null);
+  const [collapsedGroups, setCollapsedGroups] = useState<Set<string>>(new Set());
   const { confirm, confirmState, handleConfirm, handleCancel } = useConfirm();
   const { success, error: showError } = useToast();
 
@@ -203,6 +204,78 @@ export default function PayrollPage() {
     setSearch('');
     setCurrentPage(1);
   };
+
+  // Función para agrupar payrolls por mes y año
+  const groupPayrollsByMonth = (payrolls: Payroll[]) => {
+    const groups: { [key: string]: Payroll[] } = {};
+    
+    payrolls.forEach(payroll => {
+      const date = new Date(payroll.fecha);
+      const year = date.getFullYear();
+      const month = date.getMonth();
+      const monthKey = `${year}-${month.toString().padStart(2, '0')}`;
+      
+      if (!groups[monthKey]) {
+        groups[monthKey] = [];
+      }
+      groups[monthKey].push(payroll);
+    });
+
+    // Ordenar grupos por fecha (más reciente primero)
+    const sortedGroupKeys = Object.keys(groups).sort((a, b) => b.localeCompare(a));
+    
+    return sortedGroupKeys.map(key => ({
+      key,
+      monthYear: formatMonthYear(key),
+      payrolls: groups[key].sort((a, b) => new Date(b.fecha).getTime() - new Date(a.fecha).getTime())
+    }));
+  };
+
+  // Función para formatear el mes y año
+  const formatMonthYear = (key: string) => {
+    const [year, month] = key.split('-');
+    const monthNames = [
+      'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
+      'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'
+    ];
+    return `${monthNames[parseInt(month)]} ${year}`;
+  };
+
+  // Función para obtener la clave del mes actual
+  const getCurrentMonthKey = () => {
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = now.getMonth();
+    return `${year}-${month.toString().padStart(2, '0')}`;
+  };
+
+  // Función para alternar el estado de colapso de un grupo
+  const toggleGroupCollapse = (groupKey: string) => {
+    const newCollapsed = new Set(collapsedGroups);
+    if (newCollapsed.has(groupKey)) {
+      newCollapsed.delete(groupKey);
+    } else {
+      newCollapsed.add(groupKey);
+    }
+    setCollapsedGroups(newCollapsed);
+  };
+
+  // Inicializar grupos colapsados (todos excepto el mes actual)
+  useEffect(() => {
+    if (payrolls.length > 0) {
+      const currentMonthKey = getCurrentMonthKey();
+      const groups = groupPayrollsByMonth(payrolls);
+      const initialCollapsed = new Set<string>();
+      
+      groups.forEach(group => {
+        if (group.key !== currentMonthKey) {
+          initialCollapsed.add(group.key);
+        }
+      });
+      
+      setCollapsedGroups(initialCollapsed);
+    }
+  }, [payrolls.length > 0 ? payrolls[0]?.id : null]); // Solo cuando cambian los payrolls
 
   return (
     <ProtectedRoute requiredPermissions={["READ_PAYROLL"]}>
@@ -372,175 +445,365 @@ export default function PayrollPage() {
                   </div>
                 ) : (
                   <>
-                    {/* Desktop table */}
-                    <div className="hidden lg:block overflow-x-auto">
-                      <table className="min-w-full divide-y divide-gray-200">
-                        <thead className="bg-gray-50">
-                          <tr>
-                            {isAdmin && (
-                              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                Empleado
-                              </th>
+                    {/* Vista por acordeones agrupados por mes/año para empleados, tabla normal para admins */}
+                    {!isAdmin ? (
+                      // Vista de acordeón para empleados
+                      <div className="space-y-4">
+                        {groupPayrollsByMonth(payrolls).map((group) => (
+                          <div key={group.key} className="bg-white border border-gray-200 rounded-lg shadow-sm">
+                            {/* Header del acordeón */}
+                            <button
+                              onClick={() => toggleGroupCollapse(group.key)}
+                              className="w-full px-6 py-4 flex items-center justify-between hover:bg-gray-50 transition-colors"
+                            >
+                              <div className="flex items-center space-x-3">
+                                <div className="flex items-center">
+                                  {collapsedGroups.has(group.key) ? (
+                                    <ChevronRight className="h-5 w-5 text-gray-400" />
+                                  ) : (
+                                    <ChevronDown className="h-5 w-5 text-gray-400" />
+                                  )}
+                                </div>
+                                <h3 className="text-lg font-medium text-gray-900">{group.monthYear}</h3>
+                                <span className="bg-blue-100 text-blue-800 text-sm font-medium px-2.5 py-0.5 rounded-full">
+                                  {group.payrolls.length} {group.payrolls.length === 1 ? 'registro' : 'registros'}
+                                </span>
+                              </div>
+                              <div className="text-right">
+                                <div className="text-sm font-medium text-gray-900">
+                                  Total: {formatCurrency(group.payrolls.reduce((sum, p) => sum + calculateCorrectSalarioNeto(p), 0))}
+                                </div>
+                                <div className="text-xs text-gray-500">
+                                  {group.payrolls.filter(p => p.estado === 'PAGADA').length} pagado{group.payrolls.filter(p => p.estado === 'PAGADA').length !== 1 ? 's' : ''} de {group.payrolls.length}
+                                </div>
+                              </div>
+                            </button>
+
+                            {/* Contenido del acordeón */}
+                            {!collapsedGroups.has(group.key) && (
+                              <div className="border-t border-gray-200">
+                                {/* Desktop table */}
+                                <div className="hidden lg:block overflow-x-auto">
+                                  <table className="min-w-full divide-y divide-gray-200">
+                                    <thead className="bg-gray-50">
+                                      <tr>
+                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                          Fecha
+                                        </th>
+                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                          Horario
+                                        </th>
+                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                          Horas
+                                        </th>
+                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                          Salario Neto
+                                        </th>
+                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                          Estado
+                                        </th>
+                                        <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                          Acciones
+                                        </th>
+                                      </tr>
+                                    </thead>
+                                    <tbody className="bg-white divide-y divide-gray-200">
+                                      {group.payrolls.map((payroll) => (
+                                        <tr key={payroll.id} className="hover:bg-gray-50">
+                                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                            {formatDate(payroll.fecha)}
+                                          </td>
+                                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                            {formatTime(payroll.horaInicio)} - {formatTime(payroll.horaFin)}
+                                          </td>
+                                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                            {payroll.horasTrabajadas}h {payroll.minutosTrabajados}m
+                                          </td>
+                                          <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                                            {formatCurrency(calculateCorrectSalarioNeto(payroll))}
+                                          </td>
+                                          <td className="px-6 py-4 whitespace-nowrap">
+                                            <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getEstadoBadge(payroll.estado)}`}>
+                                              {payroll.estado}
+                                            </span>
+                                          </td>
+                                          <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                            <div className="flex justify-end space-x-2">
+                                              <Button
+                                                variant="outline"
+                                                size="sm"
+                                                onClick={() => handleViewDetails(payroll)}
+                                              >
+                                                Ver
+                                              </Button>
+                                              {hasPermission('UPDATE_PAYROLL') && (isAdmin || payroll.estado === 'PENDIENTE') && (
+                                                <Button
+                                                  variant="outline"
+                                                  size="sm"
+                                                  onClick={() => handleEdit(payroll)}
+                                                  disabled={!isAdmin && payroll.estado !== 'PENDIENTE'}
+                                                >
+                                                  <Edit className="h-4 w-4" />
+                                                </Button>
+                                              )}
+                                              {hasPermission('DELETE_PAYROLL') && (isAdmin || payroll.estado === 'PENDIENTE') && (
+                                                <Button
+                                                  variant="outline"
+                                                  size="sm"
+                                                  onClick={() => handleDelete(payroll)}
+                                                  className="text-red-600 hover:text-red-700"
+                                                >
+                                                  <Trash2 className="h-4 w-4" />
+                                                </Button>
+                                              )}
+                                            </div>
+                                          </td>
+                                        </tr>
+                                      ))}
+                                    </tbody>
+                                  </table>
+                                </div>
+
+                                {/* Mobile cards */}
+                                <div className="lg:hidden space-y-4 p-4">
+                                  {group.payrolls.map((payroll) => (
+                                    <div key={payroll.id} className="bg-gray-50 border border-gray-200 rounded-lg p-4">
+                                      <div className="flex items-center justify-between mb-3">
+                                        <div className="text-sm text-gray-500">
+                                          {formatDate(payroll.fecha)}
+                                        </div>
+                                        <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getEstadoBadge(payroll.estado)}`}>
+                                          {payroll.estado}
+                                        </span>
+                                      </div>
+                                      
+                                      <div className="grid grid-cols-2 gap-4 text-sm mb-4">
+                                        <div>
+                                          <span className="text-gray-500 flex items-center">
+                                            <Clock className="h-4 w-4 mr-1" />
+                                            Horario:
+                                          </span>
+                                          <div className="font-medium">
+                                            {formatTime(payroll.horaInicio)} - {formatTime(payroll.horaFin)}
+                                          </div>
+                                        </div>
+                                        <div>
+                                          <span className="text-gray-500 flex items-center">
+                                            <DollarSign className="h-4 w-4 mr-1" />
+                                            Salario Neto:
+                                          </span>
+                                          <div className="font-medium">
+                                            {formatCurrency(calculateCorrectSalarioNeto(payroll))}
+                                          </div>
+                                        </div>
+                                      </div>
+
+                                      <div className="flex justify-end space-x-2">
+                                        <Button
+                                          variant="outline"
+                                          size="sm"
+                                          onClick={() => handleViewDetails(payroll)}
+                                        >
+                                          Ver Detalles
+                                        </Button>
+                                        {hasPermission('UPDATE_PAYROLL') && (isAdmin || payroll.estado === 'PENDIENTE') && (
+                                          <Button
+                                            variant="outline"
+                                            size="sm"
+                                            onClick={() => handleEdit(payroll)}
+                                            disabled={!isAdmin && payroll.estado !== 'PENDIENTE'}
+                                          >
+                                            <Edit className="h-4 w-4 mr-1" />
+                                            Editar
+                                          </Button>
+                                        )}
+                                        {hasPermission('DELETE_PAYROLL') && (isAdmin || payroll.estado === 'PENDIENTE') && (
+                                          <Button
+                                            variant="outline"
+                                            size="sm"
+                                            onClick={() => handleDelete(payroll)}
+                                            className="text-red-600 hover:text-red-700"
+                                          >
+                                            <Trash2 className="h-4 w-4" />
+                                          </Button>
+                                        )}
+                                      </div>
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
                             )}
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                              Fecha
-                            </th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                              Horario
-                            </th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                              Horas
-                            </th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                              Salario Neto
-                            </th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                              Estado
-                            </th>
-                            <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                              Acciones
-                            </th>
-                          </tr>
-                        </thead>
-                        <tbody className="bg-white divide-y divide-gray-200">
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      // Vista de tabla tradicional para administradores
+                      <>
+                        {/* Desktop table */}
+                        <div className="hidden lg:block overflow-x-auto">
+                          <table className="min-w-full divide-y divide-gray-200">
+                            <thead className="bg-gray-50">
+                              <tr>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                  Empleado
+                                </th>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                  Fecha
+                                </th>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                  Horario
+                                </th>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                  Horas
+                                </th>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                  Salario Neto
+                                </th>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                  Estado
+                                </th>
+                                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                  Acciones
+                                </th>
+                              </tr>
+                            </thead>
+                            <tbody className="bg-white divide-y divide-gray-200">
+                              {payrolls.map((payroll) => (
+                                <tr key={payroll.id} className="hover:bg-gray-50">
+                                  <td className="px-6 py-4 whitespace-nowrap">
+                                    <div className="text-sm font-medium text-gray-900">
+                                      {payroll.employee?.user?.nombre || 'Usuario'} {payroll.employee?.user?.apellido || ''}
+                                    </div>
+                                    <div className="text-sm text-gray-500">{payroll.employee?.user?.correo || 'N/A'}</div>
+                                  </td>
+                                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                    {formatDate(payroll.fecha)}
+                                  </td>
+                                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                    {formatTime(payroll.horaInicio)} - {formatTime(payroll.horaFin)}
+                                  </td>
+                                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                    {payroll.horasTrabajadas}h {payroll.minutosTrabajados}m
+                                  </td>
+                                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                                    {formatCurrency(calculateCorrectSalarioNeto(payroll))}
+                                  </td>
+                                  <td className="px-6 py-4 whitespace-nowrap">
+                                    <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getEstadoBadge(payroll.estado)}`}>
+                                      {payroll.estado}
+                                    </span>
+                                  </td>
+                                  <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                    <div className="flex justify-end space-x-2">
+                                      <Button
+                                        variant="outline"
+                                        size="sm"
+                                        onClick={() => handleViewDetails(payroll)}
+                                      >
+                                        Ver
+                                      </Button>
+                                      {hasPermission('UPDATE_PAYROLL') && (isAdmin || payroll.estado === 'PENDIENTE') && (
+                                        <Button
+                                          variant="outline"
+                                          size="sm"
+                                          onClick={() => handleEdit(payroll)}
+                                          disabled={!isAdmin && payroll.estado !== 'PENDIENTE'}
+                                        >
+                                          <Edit className="h-4 w-4" />
+                                        </Button>
+                                      )}
+                                      {hasPermission('DELETE_PAYROLL') && (isAdmin || payroll.estado === 'PENDIENTE') && (
+                                        <Button
+                                          variant="outline"
+                                          size="sm"
+                                          onClick={() => handleDelete(payroll)}
+                                          className="text-red-600 hover:text-red-700"
+                                        >
+                                          <Trash2 className="h-4 w-4" />
+                                        </Button>
+                                      )}
+                                    </div>
+                                  </td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        </div>
+
+                        {/* Mobile cards */}
+                        <div className="lg:hidden space-y-4">
                           {payrolls.map((payroll) => (
-                            <tr key={payroll.id} className="hover:bg-gray-50">
-                              {isAdmin && (
-                                <td className="px-6 py-4 whitespace-nowrap">
+                            <div key={payroll.id} className="bg-white border border-gray-200 rounded-lg p-4">
+                              <div className="flex items-center justify-between mb-3">
+                                <div>
                                   <div className="text-sm font-medium text-gray-900">
                                     {payroll.employee?.user?.nombre || 'Usuario'} {payroll.employee?.user?.apellido || ''}
                                   </div>
-                                  <div className="text-sm text-gray-500">{payroll.employee?.user?.correo || 'N/A'}</div>
-                                </td>
-                              )}
-                              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                {formatDate(payroll.fecha)}
-                              </td>
-                              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                {formatTime(payroll.horaInicio)} - {formatTime(payroll.horaFin)}
-                              </td>
-                              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                {payroll.horasTrabajadas}h {payroll.minutosTrabajados}m
-                              </td>
-                              <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                                {formatCurrency(calculateCorrectSalarioNeto(payroll))}
-                              </td>
-                              <td className="px-6 py-4 whitespace-nowrap">
+                                  <div className="text-sm text-gray-500">
+                                    {formatDate(payroll.fecha)}
+                                  </div>
+                                </div>
                                 <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getEstadoBadge(payroll.estado)}`}>
                                   {payroll.estado}
                                 </span>
-                              </td>
-                              <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                <div className="flex justify-end space-x-2">
+                              </div>
+                              
+                              <div className="grid grid-cols-2 gap-4 text-sm mb-4">
+                                <div>
+                                  <span className="text-gray-500 flex items-center">
+                                    <Clock className="h-4 w-4 mr-1" />
+                                    Horario:
+                                  </span>
+                                  <div className="font-medium">
+                                    {formatTime(payroll.horaInicio)} - {formatTime(payroll.horaFin)}
+                                  </div>
+                                </div>
+                                <div>
+                                  <span className="text-gray-500 flex items-center">
+                                    <DollarSign className="h-4 w-4 mr-1" />
+                                    Salario Neto:
+                                  </span>
+                                  <div className="font-medium">
+                                    {formatCurrency(calculateCorrectSalarioNeto(payroll))}
+                                  </div>
+                                </div>
+                              </div>
+
+                              <div className="flex justify-end space-x-2">
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => handleViewDetails(payroll)}
+                                >
+                                  Ver Detalles
+                                </Button>
+                                {hasPermission('UPDATE_PAYROLL') && (isAdmin || payroll.estado === 'PENDIENTE') && (
                                   <Button
                                     variant="outline"
                                     size="sm"
-                                    onClick={() => handleViewDetails(payroll)}
+                                    onClick={() => handleEdit(payroll)}
+                                    disabled={!isAdmin && payroll.estado !== 'PENDIENTE'}
                                   >
-                                    Ver
+                                    <Edit className="h-4 w-4 mr-1" />
+                                    Editar
                                   </Button>
-                                  {hasPermission('UPDATE_PAYROLL') && (isAdmin || payroll.estado === 'PENDIENTE') && (
-                                    <Button
-                                      variant="outline"
-                                      size="sm"
-                                      onClick={() => handleEdit(payroll)}
-                                      disabled={!isAdmin && payroll.estado !== 'PENDIENTE'}
-                                    >
-                                      <Edit className="h-4 w-4" />
-                                    </Button>
-                                  )}
-                                  {hasPermission('DELETE_PAYROLL') && (isAdmin || payroll.estado === 'PENDIENTE') && (
-                                    <Button
-                                      variant="outline"
-                                      size="sm"
-                                      onClick={() => handleDelete(payroll)}
-                                      className="text-red-600 hover:text-red-700"
-                                    >
-                                      <Trash2 className="h-4 w-4" />
-                                    </Button>
-                                  )}
-                                </div>
-                              </td>
-                            </tr>
+                                )}
+                                {hasPermission('DELETE_PAYROLL') && (isAdmin || payroll.estado === 'PENDIENTE') && (
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => handleDelete(payroll)}
+                                    className="text-red-600 hover:text-red-700"
+                                  >
+                                    <Trash2 className="h-4 w-4" />
+                                  </Button>
+                                )}
+                              </div>
+                            </div>
                           ))}
-                        </tbody>
-                      </table>
-                    </div>
-
-                    {/* Mobile cards */}
-                    <div className="lg:hidden space-y-4">
-                      {payrolls.map((payroll) => (
-                        <div key={payroll.id} className="bg-white border border-gray-200 rounded-lg p-4">
-                          <div className="flex items-center justify-between mb-3">
-                            <div>
-                              {isAdmin && (
-                                <div className="text-sm font-medium text-gray-900">
-                                  {payroll.employee?.user?.nombre || 'Usuario'} {payroll.employee?.user?.apellido || ''}
-                                </div>
-                              )}
-                              <div className="text-sm text-gray-500">
-                                {formatDate(payroll.fecha)}
-                              </div>
-                            </div>
-                            <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getEstadoBadge(payroll.estado)}`}>
-                              {payroll.estado}
-                            </span>
-                          </div>
-                          
-                          <div className="grid grid-cols-2 gap-4 text-sm mb-4">
-                            <div>
-                              <span className="text-gray-500 flex items-center">
-                                <Clock className="h-4 w-4 mr-1" />
-                                Horario:
-                              </span>
-                              <div className="font-medium">
-                                {formatTime(payroll.horaInicio)} - {formatTime(payroll.horaFin)}
-                              </div>
-                            </div>
-                            <div>
-                              <span className="text-gray-500 flex items-center">
-                                <DollarSign className="h-4 w-4 mr-1" />
-                                Salario Neto:
-                              </span>
-                              <div className="font-medium">
-                                {formatCurrency(calculateCorrectSalarioNeto(payroll))}
-                              </div>
-                            </div>
-                          </div>
-
-                          <div className="flex justify-end space-x-2">
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => handleViewDetails(payroll)}
-                            >
-                              Ver Detalles
-                            </Button>
-                            {hasPermission('UPDATE_PAYROLL') && (isAdmin || payroll.estado === 'PENDIENTE') && (
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => handleEdit(payroll)}
-                                disabled={!isAdmin && payroll.estado !== 'PENDIENTE'}
-                              >
-                                <Edit className="h-4 w-4 mr-1" />
-                                Editar
-                              </Button>
-                            )}
-                            {hasPermission('DELETE_PAYROLL') && (isAdmin || payroll.estado === 'PENDIENTE') && (
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => handleDelete(payroll)}
-                                className="text-red-600 hover:text-red-700"
-                              >
-                                <Trash2 className="h-4 w-4" />
-                              </Button>
-                            )}
-                          </div>
                         </div>
-                      ))}
-                    </div>
+                      </>
+                    )}
                   </>
                 )}
 
