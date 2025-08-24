@@ -294,11 +294,6 @@ export default function PayrollPage() {
                     : `Registra tus horas trabajadas y consumos diarios - ${currentEmployee?.user.nombre} ${currentEmployee?.user.apellido}`
                   }
                 </p>
-                {!isAdmin && currentEmployee && (
-                  <div className="mt-2 text-sm text-blue-600 bg-blue-50 px-3 py-1 rounded-md inline-block">
-                    Salario por hora: {formatCurrency(currentEmployee.salarioPorHora)}
-                  </div>
-                )}
               </div>
               <div className="mt-4 flex space-x-3 md:mt-0 md:ml-4">
                 {/* Botón Pagar nómina - Solo para Super Administrador */}
