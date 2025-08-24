@@ -26,11 +26,9 @@ export default function ProfilePage() {
   }, []);
 
   const loadProfile = async () => {
-    if (!user?.id) return;
-    
     setIsLoading(true);
     try {
-      const response = await userService.getById(user.id);
+      const response = await userService.getProfile();
       if (response.success && response.data) {
         setProfileData(response.data);
         setFormData({

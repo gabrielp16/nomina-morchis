@@ -153,6 +153,10 @@ export const userService = {
     return fetchApi<User>(`/users/${id}`);
   },
 
+  getProfile: async (): Promise<ApiResponse<User>> => {
+    return fetchApi<User>('/users/profile');
+  },
+
   create: async (userData: CreateUserFormData): Promise<ApiResponse<User>> => {
     return fetchApi<User>('/users', {
       method: 'POST',
