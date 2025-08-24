@@ -10,6 +10,7 @@ interface AuthContextType {
   login: (token: string, userData: Omit<AuthUser, 'token'>) => void;
   logout: () => void;
   updatePermissions: (permissions: string[]) => void;
+  updateUser: (userData: Partial<AuthUser>) => void;
   hasPermission: (permission: string) => boolean;
   hasRole: (role: string) => boolean;
   verifyToken: () => Promise<void>;
@@ -220,6 +221,23 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     }
   };
 
+  const updateUser = (userData: Partial<AuthUser>) => {
+    if (user) {
+      const updatedUser = { ...user, ...userData };
+      setUser(updatedUser);
+      
+      if (typeof window !== 'undefined') {
+        localStorage.setItem(STORAGE_KEYS.USER_DATA, JSON.stringify({
+          id: updatedUser.id,
+          email: updatedUser.email,
+          name: updatedUser.name,
+          permissions: updatedUser.permissions,
+          role: updatedUser.role
+        }));
+      }
+    }
+  };
+
   const hasPermission = (permission: string): boolean => {
     if (!user) return false;
     return user.permissions.includes(permission) || user.permissions.includes('MANAGE_ALL');
@@ -237,6 +255,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     login,
     logout,
     updatePermissions,
+    updateUser,
     hasPermission,
     hasRole,
     verifyToken,

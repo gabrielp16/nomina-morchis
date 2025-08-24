@@ -9,7 +9,7 @@ import { userService } from '../services/api';
 import type { User as UserType } from '../types/auth';
 
 export default function ProfilePage() {
-  const { user } = useAuth();
+  const { user, updateUser } = useAuth();
   const { success, error: showError } = useToast();
   const [profileData, setProfileData] = useState<UserType | null>(null);
   const [isEditing, setIsEditing] = useState(false);
@@ -36,6 +36,13 @@ export default function ProfilePage() {
           apellido: response.data.apellido || '',
           correo: response.data.correo || '',
           numeroCelular: response.data.numeroCelular || ''
+        });
+
+        // Sincronizar el contexto de autenticación con los datos más recientes
+        const updatedName = `${response.data.nombre || ''} ${response.data.apellido || ''}`.trim();
+        updateUser({
+          name: updatedName,
+          email: response.data.correo || user?.email || ''
         });
       }
     } catch (error) {
@@ -76,6 +83,16 @@ export default function ProfilePage() {
       if (response.success) {
         success('Perfil actualizado exitosamente');
         setIsEditing(false);
+        
+        // Actualizar el contexto de autenticación con la nueva información
+        if (response.data) {
+          const updatedName = `${response.data.nombre || ''} ${response.data.apellido || ''}`.trim();
+          updateUser({
+            name: updatedName,
+            email: response.data.correo || user?.email || ''
+          });
+        }
+        
         loadProfile(); // Recargar datos
       } else {
         showError(response.error || 'Error al actualizar el perfil');
