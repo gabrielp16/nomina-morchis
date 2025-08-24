@@ -4,6 +4,7 @@ import { Button } from '../ui/button';
 import { LoginSidebar } from './LoginSidebar';
 import { useAuth } from '../../context/AuthContext';
 import { useToast } from '../../context/ToastContext';
+import { useRoleBasedNavigation } from '../../hooks/useRoleBasedNavigation';
 import logoSistema from "../../components/welcome/logo-sistema.svg";
 import { Link } from 'react-router';
 
@@ -14,6 +15,7 @@ export function Navigation() {
   const [showConfigMenu, setShowConfigMenu] = useState(false);
   const { user, isAuthenticated, logout, hasPermission } = useAuth();
   const { info } = useToast();
+  const { getDefaultRoute } = useRoleBasedNavigation();
 
   const handleLogout = () => {
     logout();
@@ -30,7 +32,7 @@ export function Navigation() {
             {/* Logo */}
             <div className="flex items-center">
               <div className="flex-shrink-0">
-                <Link to="/dashboard" className="text-xl font-bold text-gray-900 hover:text-blue-600 transition-colors">
+                <Link to={getDefaultRoute()} className="text-xl font-bold text-gray-900 hover:text-blue-600 transition-colors">
                   {/* Logo y Título de Sistema Nómina */}
                   <div className="flex items-center mb-4 mt-4">
                     <img
