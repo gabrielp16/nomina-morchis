@@ -154,28 +154,29 @@ export function Navigation() {
                         )}
                       </div>
                       
-                      {/* 3. SECCIÓN DE CONFIGURACIÓN */}
-                      <div className="border-t border-gray-200 pt-2">
-                        <div className="px-4 py-1">
-                          <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                            Sistema
-                          </p>
-                        </div>
+                      {/* 3. SECCIÓN DE CONFIGURACIÓN - Solo mostrar si hay opciones disponibles */}
+                      {(hasPermission('READ_USERS') || hasPermission('READ_ROLES') || hasPermission('READ_PERMISSIONS') || hasPermission('READ_AUDIT')) && (
+                        <div className="border-t border-gray-200 pt-2">
+                          <div className="px-4 py-1">
+                            <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                              Sistema
+                            </p>
+                          </div>
 
-                        {/* Configuración con Submenú */}
-                        <div className="relative">
-                          <button
-                            onClick={() => setShowConfigMenu(!showConfigMenu)}
-                            className="flex items-center justify-between w-full px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-700 transition-colors"
-                          >
-                            <div className="flex items-center">
-                              <div className="h-8 w-8 bg-gray-100 rounded-lg flex items-center justify-center mr-3">
-                                <Settings className="h-4 w-4 text-gray-600" />
+                          {/* Configuración con Submenú - Solo mostrar si hay opciones disponibles */}
+                          <div className="relative">
+                            <button
+                              onClick={() => setShowConfigMenu(!showConfigMenu)}
+                              className="flex items-center justify-between w-full px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-700 transition-colors"
+                            >
+                              <div className="flex items-center">
+                                <div className="h-8 w-8 bg-gray-100 rounded-lg flex items-center justify-center mr-3">
+                                  <Settings className="h-4 w-4 text-gray-600" />
+                                </div>
+                                <span className="font-medium">Configuración</span>
                               </div>
-                              <span className="font-medium">Configuración</span>
-                            </div>
-                            <ChevronDown className={`h-4 w-4 transition-transform duration-200 ${showConfigMenu ? 'rotate-180 text-blue-600' : 'text-gray-400'}`} />
-                          </button>
+                              <ChevronDown className={`h-4 w-4 transition-transform duration-200 ${showConfigMenu ? 'rotate-180 text-blue-600' : 'text-gray-400'}`} />
+                            </button>
                           
                           {/* 3.1-3.4 Submenú de Configuración */}
                           {showConfigMenu && (
@@ -244,11 +245,10 @@ export function Navigation() {
                                 </Link>
                               )}
                             </div>
-                          )}
+                            )}
+                          </div>
                         </div>
-                      </div>
-                      
-                      {/* 4. PERFIL Y LOGOUT */}
+                      )}                      {/* 4. PERFIL Y LOGOUT */}
                       <div className="border-t border-gray-200 pt-2 mt-2">
                         <div className="px-4 py-1">
                           <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider">
