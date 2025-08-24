@@ -248,13 +248,29 @@ export function Navigation() {
                         </div>
                       </div>
                       
-                      {/* 4. LOGOUT */}
+                      {/* 4. PERFIL Y LOGOUT */}
                       <div className="border-t border-gray-200 pt-2 mt-2">
                         <div className="px-4 py-1">
                           <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                            Sesión
+                            Cuenta
                           </p>
                         </div>
+                        
+                        {/* Mi Perfil Link */}
+                        <Link
+                          to="/profile"
+                          className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-700 transition-colors"
+                          onClick={() => {
+                            setShowUserMenu(false);
+                            setShowConfigMenu(false);
+                          }}
+                        >
+                          <div className="h-8 w-8 bg-green-100 rounded-lg flex items-center justify-center mr-3">
+                            <UserCog className="h-4 w-4 text-green-600" />
+                          </div>
+                          <span className="font-medium">Mi Perfil</span>
+                        </Link>
+                        
                         <button
                           onClick={handleLogout}
                           className="flex items-center w-full px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors"

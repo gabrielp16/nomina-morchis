@@ -167,6 +167,13 @@ export const userService = {
     });
   },
 
+  updateProfile: async (userData: { nombre?: string; apellido?: string; correo?: string; numeroCelular?: string }): Promise<ApiResponse<User>> => {
+    return fetchApi<User>('/users/profile', {
+      method: 'PUT',
+      body: JSON.stringify(userData),
+    });
+  },
+
   delete: async (id: string): Promise<ApiResponse<void>> => {
     return fetchApi<void>(`/users/${id}`, {
       method: 'DELETE',
