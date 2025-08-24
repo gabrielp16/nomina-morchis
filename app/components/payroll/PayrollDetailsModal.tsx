@@ -103,19 +103,21 @@ export function PayrollDetailsModal({ isOpen, onClose, payroll }: PayrollDetails
         <div className="p-6">
           {/* Información del empleado */}
           <div className="bg-gray-50 border border-gray-200 rounded-md p-4 mb-6">
-            <div className="flex items-center">
-              <div className="flex-shrink-0 h-12 w-12">
-                <div className="h-12 w-12 rounded-full bg-gray-200 flex items-center justify-center">
-                  <User className="h-6 w-6 text-gray-500" />
+            <div className="flex flex-col sm:flex-row sm:items-center space-y-3 sm:space-y-0">
+              <div className="flex items-center flex-1 min-w-0">
+                <div className="flex-shrink-0 h-12 w-12">
+                  <div className="h-12 w-12 rounded-full bg-gray-200 flex items-center justify-center">
+                    <User className="h-6 w-6 text-gray-500" />
+                  </div>
+                </div>
+                <div className="ml-4 flex-1 min-w-0">
+                  <div className="text-lg font-medium text-gray-900 truncate">
+                    {payroll.employee.user.nombre} {payroll.employee.user.apellido}
+                  </div>
+                  <div className="text-sm text-gray-500 truncate">{payroll.employee.user.correo}</div>
                 </div>
               </div>
-              <div className="ml-4">
-                <div className="text-lg font-medium text-gray-900">
-                  {payroll.employee.user.nombre} {payroll.employee.user.apellido}
-                </div>
-                <div className="text-sm text-gray-500">{payroll.employee.user.correo}</div>
-              </div>
-              <div className="ml-auto">
+              <div className="flex justify-start sm:justify-end">
                 <span className={`inline-flex px-3 py-1 text-sm font-semibold rounded-full ${getEstadoBadge(payroll.estado)}`}>
                   {payroll.estado}
                 </span>
