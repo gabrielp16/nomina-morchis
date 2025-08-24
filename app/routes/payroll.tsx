@@ -142,8 +142,8 @@ export default function PayrollPage() {
     const descuentoConsumos = subtotalConsumos * 0.15;
     const totalConsumos = subtotalConsumos - descuentoConsumos;
     
-    // Calcular salario neto: salario bruto - total consumos - adelanto + deuda
-    const salarioNeto = payroll.salarioBruto - totalConsumos - payroll.adelantoNomina + payroll.deudaMorchis;
+    // Calcular salario neto: salario bruto - total consumos - adelanto - descuadre + deuda
+    const salarioNeto = payroll.salarioBruto - totalConsumos - payroll.adelantoNomina - (payroll.descuadre || 0) + payroll.deudaMorchis;
     
     return salarioNeto;
   };
