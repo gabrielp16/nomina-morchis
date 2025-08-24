@@ -393,6 +393,7 @@ export const payrollService = {
     consumos: { valor: number; descripcion: string }[];
     deudaMorchis?: number;
     adelantoNomina?: number;
+    descuadre?: number;
     observaciones?: string;
   }) => {
     return fetchApi<Payroll>('/payroll', {
@@ -408,6 +409,7 @@ export const payrollService = {
     consumos?: { valor: number; descripcion: string }[];
     deudaMorchis?: number;
     adelantoNomina?: number;
+    descuadre?: number;
     estado?: 'PENDIENTE' | 'PROCESADA' | 'PAGADA';
     observaciones?: string;
   }) => {

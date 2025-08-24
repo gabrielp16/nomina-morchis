@@ -188,6 +188,7 @@ export function EditPayrollModal({
         consumos: data.consumos,
         deudaMorchis: data.deudaMorchis,
         adelantoNomina: data.adelantoNomina,
+        descuadre: data.descuadre,
         estado: data.estado,
         observaciones: data.observaciones
       });
