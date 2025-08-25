@@ -112,12 +112,23 @@ export function EditUserModal({ isOpen, onClose, onSuccess, user }: EditUserModa
       // Solo incluir password si no está vacío
       if (data.password && data.password.trim()) {
         updateData.password = data.password;
+        console.log('🔐 Password incluido en updateData');
+      } else {
+        console.log('📝 No se incluye password (vacío o undefined)');
       }
+
+      console.log('📤 Datos enviados al servidor:', {
+        ...updateData,
+        password: updateData.password ? '[OCULTO]' : undefined
+      });
 
       const response = await userService.update(user.id, updateData);
 
       if (response.success) {
-        success('Usuario actualizado exitosamente');
+        const successMessage = data.password && data.password.trim() 
+          ? 'Usuario y contraseña actualizados exitosamente' 
+          : 'Usuario actualizado exitosamente';
+        success(successMessage);
         onSuccess();
         onClose();
       } else {
