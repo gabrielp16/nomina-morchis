@@ -294,11 +294,6 @@ export function EditPayrollModal({
                   {...register('fecha')}
                   disabled={isLoading}
                 />
-                {watch('fecha') && (
-                  <p className="mt-1 text-xs text-gray-500">
-                    Se mostrará como: {formatDate(watch('fecha'))}
-                  </p>
-                )}
                 {errors.fecha && (
                   <p className="mt-1 text-sm text-red-600">{errors.fecha.message}</p>
                 )}
