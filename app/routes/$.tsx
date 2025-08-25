@@ -44,7 +44,7 @@ export default function NotFoundPage() {
         <div className="flex justify-center">
           <div className="relative">
             <img 
-              src="/images/404-Not-found-page_3.png" 
+              src="/images/404-Not-found-page.png" 
               alt="Morchis Cook - Página no encontrada"
               className="w-full max-w-sm md:max-w-md lg:max-w-lg h-auto"
             />
