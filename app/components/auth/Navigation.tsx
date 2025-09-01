@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { User, LogOut, Settings, Shield, Users, ChevronDown, Activity, UserCheck, ChartArea, DollarSign, UserCog } from 'lucide-react';
+import { User, LogOut, Settings, Shield, Users, ChevronDown, Activity, UserCheck, ChartArea, DollarSign, UserCog, Calendar } from 'lucide-react';
 import { Button } from '../ui/button';
 import { LoginSidebar } from './LoginSidebar';
 import { useAuth } from '../../context/AuthContext';
@@ -173,6 +173,23 @@ export function Navigation() {
                               <DollarSign className="h-4 w-4 text-purple-600" />
                             </div>
                             <span className="font-medium">Nómina</span>
+                          </Link>
+                        )}
+
+                        {/* Detalle de Nómina Link */}
+                        {hasPermission('READ_PAYROLL') && (
+                          <Link
+                            to="/payroll-details"
+                            className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-700 transition-colors"
+                            onClick={() => {
+                              setShowUserMenu(false);
+                              setShowConfigMenu(false);
+                            }}
+                          >
+                            <div className="h-8 w-8 bg-indigo-100 rounded-lg flex items-center justify-center mr-3">
+                              <Calendar className="h-4 w-4 text-indigo-600" />
+                            </div>
+                            <span className="font-medium">Detalle de Nómina</span>
                           </Link>
                         )}
                       </div>

@@ -16,7 +16,7 @@ import { PayrollDetailsModal } from '../components/payroll/PayrollDetailsModal';
 import { PayrollPaymentModal } from '../components/payroll/PayrollPaymentModal';
 import { ConfirmDialog } from '../components/ui/ConfirmDialog';
 
-export default function PayrollPage() {
+export default function PayrollDetailsPage() {
   const { hasPermission } = useAuth();
   const { isAdmin, isEmployee, currentEmployee } = useEmployee();
   const [payrolls, setPayrolls] = useState<Payroll[]>([]);
@@ -324,12 +324,12 @@ export default function PayrollPage() {
             <div className="md:flex md:items-center md:justify-between mb-6">
               <div className="flex-1 min-w-0">
                 <h2 className="text-2xl font-bold leading-7 text-gray-900 sm:text-3xl sm:truncate">
-                  {isAdmin ? 'Gestión de Nómina' : 'Mi Nómina'}
+                  {isAdmin ? 'Detalle de Nómina' : 'Detalle de Mi Nómina'}
                 </h2>
                 <p className="mt-1 text-sm text-gray-500">
                   {isAdmin 
-                    ? 'Administra los pagos de nómina de los empleados' 
-                    : `Registra tus horas trabajadas y consumos diarios - ${currentEmployee?.user.nombre} ${currentEmployee?.user.apellido}`
+                    ? 'Vista detallada de todos los registros de nómina con información completa' 
+                    : `Vista detallada de tus registros de trabajo y consumos - ${currentEmployee?.user.nombre} ${currentEmployee?.user.apellido}`
                   }
                 </p>
               </div>

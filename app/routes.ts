@@ -9,6 +9,7 @@ export default [
   route("/activity", "routes/activity.tsx"),
   route("/employees", "routes/employees.tsx"),
   route("/payroll", "routes/payroll.tsx"),
+  route("/payroll-details", "routes/payroll-details.tsx"),
   route("/profile", "routes/profile.tsx"),
   route("*", "routes/$.tsx"),
 ] satisfies RouteConfig;
