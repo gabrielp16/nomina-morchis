@@ -13,7 +13,7 @@ export function Navigation() {
   const [loginMode, setLoginMode] = useState<'login' | 'register'>('login');
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [showConfigMenu, setShowConfigMenu] = useState(false);
-  const { user, isAuthenticated, logout, hasPermission } = useAuth();
+  const { user, isAuthenticated, logout, hasPermission, hasRole } = useAuth();
   const { info } = useToast();
   const { getDefaultRoute } = useRoleBasedNavigation();
 
@@ -127,20 +127,22 @@ export function Navigation() {
                           </p>
                         </div>
                         
-                        {/* Dashboard Link */}
-                        <Link
-                          to="/dashboard"
-                          className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-700 transition-colors"
-                          onClick={() => {
-                            setShowUserMenu(false);
-                            setShowConfigMenu(false);
-                          }}
-                        >
-                          <div className="h-8 w-8 bg-blue-100 rounded-lg flex items-center justify-center mr-3">
-                            <ChartArea className="h-4 w-4 text-blue-600" />
-                          </div>
-                          <span className="font-medium">Dashboard</span>
-                        </Link>
+                        {/* Dashboard Link - Solo para Administrador, Super Administrador y Supervisor */}
+                        {(hasRole('Administrador') || hasRole('Super Administrador') || hasRole('Supervisor')) && (
+                          <Link
+                            to="/dashboard"
+                            className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-700 transition-colors"
+                            onClick={() => {
+                              setShowUserMenu(false);
+                              setShowConfigMenu(false);
+                            }}
+                          >
+                            <div className="h-8 w-8 bg-blue-100 rounded-lg flex items-center justify-center mr-3">
+                              <ChartArea className="h-4 w-4 text-blue-600" />
+                            </div>
+                            <span className="font-medium">Dashboard</span>
+                          </Link>
+                        )}
 
                         {/* Empleados Link */}
                         {hasPermission('READ_USERS') && (
@@ -176,8 +178,8 @@ export function Navigation() {
                           </Link>
                         )}
 
-                        {/* Detalle de Nómina Link */}
-                        {hasPermission('READ_PAYROLL') && (
+                        {/* Detalle de Nómina Link - Solo para Administrador, Super Administrador y Supervisor */}
+                        {hasPermission('READ_PAYROLL') && (hasRole('Administrador') || hasRole('Super Administrador') || hasRole('Supervisor')) && (
                           <Link
                             to="/payroll-details"
                             className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-700 transition-colors"

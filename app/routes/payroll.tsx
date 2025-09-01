@@ -269,6 +269,78 @@ export default function PayrollPage() {
     }));
   };
 
+  // Función para agrupar empleados por mes con su estado consolidado
+  const groupEmployeesByMonth = (payrolls: Payroll[]) => {
+    const groups: { [key: string]: { [employeeId: string]: { employee: any, status: string, totalEarnings: number, recordCount: number } } } = {};
+    
+    payrolls.forEach(payroll => {
+      // Parsear la fecha manualmente para evitar problemas de zona horaria
+      let year: number, month: number;
+      
+      if (typeof payroll.fecha === 'string') {
+        // Si es un string ISO, extraer directamente
+        if (payroll.fecha.includes('T') || payroll.fecha.includes('Z')) {
+          // Para fechas ISO como "2025-09-01T00:00:00.000Z"
+          const datePart = payroll.fecha.split('T')[0];
+          const [yearStr, monthStr] = datePart.split('-');
+          year = parseInt(yearStr);
+          month = parseInt(monthStr) - 1; // JavaScript meses van de 0-11
+        } else {
+          // Para fechas en formato "YYYY-MM-DD"
+          const [yearStr, monthStr] = payroll.fecha.split('-');
+          year = parseInt(yearStr);
+          month = parseInt(monthStr) - 1; // JavaScript meses van de 0-11
+        }
+      } else {
+        // Si es un objeto Date
+        const date = new Date(payroll.fecha);
+        year = date.getFullYear();
+        month = date.getMonth();
+      }
+      
+      const monthKey = `${year}-${month.toString().padStart(2, '0')}`;
+      const employeeId = payroll.employee?.id || 'unknown';
+      
+      if (!groups[monthKey]) {
+        groups[monthKey] = {};
+      }
+      
+      if (!groups[monthKey][employeeId]) {
+        groups[monthKey][employeeId] = {
+          employee: payroll.employee,
+          status: payroll.estado,
+          totalEarnings: 0,
+          recordCount: 0
+        };
+      }
+      
+      // Actualizar el estado consolidado (prioridad: PAGADA > PROCESADA > PENDIENTE)
+      const currentStatus = groups[monthKey][employeeId].status;
+      const newStatus = payroll.estado;
+      
+      if (currentStatus === 'PENDIENTE' && (newStatus === 'PROCESADA' || newStatus === 'PAGADA')) {
+        groups[monthKey][employeeId].status = newStatus;
+      } else if (currentStatus === 'PROCESADA' && newStatus === 'PAGADA') {
+        groups[monthKey][employeeId].status = newStatus;
+      }
+      
+      // Sumar ganancias y contar registros
+      groups[monthKey][employeeId].totalEarnings += calculateCorrectSalarioNeto(payroll);
+      groups[monthKey][employeeId].recordCount += 1;
+    });
+
+    // Ordenar grupos por fecha (más reciente primero)
+    const sortedGroupKeys = Object.keys(groups).sort((a, b) => b.localeCompare(a));
+    
+    return sortedGroupKeys.map(key => ({
+      key,
+      monthYear: formatMonthYear(key),
+      employees: Object.values(groups[key]).sort((a, b) => 
+        (a.employee?.user?.nombre || '').localeCompare(b.employee?.user?.nombre || '')
+      )
+    }));
+  };
+
   // Función para formatear el mes y año
   const formatMonthYear = (key: string) => {
     const [year, month] = key.split('-');
@@ -480,7 +552,7 @@ export default function PayrollPage() {
                   <>
                     {/* Vista por acordeones agrupados por mes/año para todos los usuarios */}
                     <div className="space-y-4">
-                      {groupPayrollsByMonth(payrolls).map((group) => (
+                      {groupEmployeesByMonth(payrolls).map((group) => (
                         <div key={group.key} className="bg-white border border-gray-200 rounded-lg shadow-sm">
                           {/* Header del acordeón */}
                           <button
@@ -497,186 +569,84 @@ export default function PayrollPage() {
                               </div>
                               <h3 className="text-lg font-medium text-gray-900">{group.monthYear}</h3>
                               <span className="bg-blue-100 text-blue-800 text-sm font-medium px-2.5 py-0.5 rounded-full">
-                                {group.payrolls.length} {group.payrolls.length === 1 ? 'registro' : 'registros'}
+                                {group.employees.length} {group.employees.length === 1 ? 'empleado' : 'empleados'}
                               </span>
                             </div>
                             <div className="text-right">
                               <div className="text-sm font-medium text-gray-900">
-                                Total: {formatCurrency(group.payrolls.reduce((sum, p) => sum + calculateCorrectSalarioNeto(p), 0))}
+                                Total: {formatCurrency(group.employees.reduce((sum, emp) => sum + emp.totalEarnings, 0))}
                               </div>
                               <div className="text-xs text-gray-500">
-                                {group.payrolls.filter(p => p.estado === 'PAGADA').length} pagado{group.payrolls.filter(p => p.estado === 'PAGADA').length !== 1 ? 's' : ''} de {group.payrolls.length}
+                                {group.employees.filter(emp => emp.status === 'PAGADA').length} pagado{group.employees.filter(emp => emp.status === 'PAGADA').length !== 1 ? 's' : ''} de {group.employees.length}
                               </div>
                             </div>
                           </button>
 
-                          {/* Contenido del acordeón */}
+                          {/* Contenido del acordeón - Vista por empleados */}
                           {!collapsedGroups.has(group.key) && (
                             <div className="border-t border-gray-200">
-                              {/* Desktop table */}
-                              <div className="hidden lg:block overflow-x-auto">
-                                <table className="min-w-full divide-y divide-gray-200">
-                                  <thead className="bg-gray-50">
-                                    <tr>
-                                      {isAdmin && (
-                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                          Empleado
-                                        </th>
-                                      )}
-                                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                        Fecha
-                                      </th>
-                                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                        Horario
-                                      </th>
-                                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                        Horas
-                                      </th>
-                                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                        Salario Neto
-                                      </th>
-                                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                        Estado
-                                      </th>
-                                      <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                        Acciones
-                                      </th>
-                                    </tr>
-                                  </thead>
-                                  <tbody className="bg-white divide-y divide-gray-200">
-                                    {group.payrolls.map((payroll) => (
-                                      <tr key={payroll.id} className="hover:bg-gray-50">
-                                        {isAdmin && (
-                                          <td className="px-6 py-4 whitespace-nowrap">
-                                            <div className="text-sm font-medium text-gray-900">
-                                              {payroll.employee?.user?.nombre || 'N/A'} {payroll.employee?.user?.apellido || ''}
-                                            </div>
-                                          </td>
-                                        )}
-                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                          {formatDay(payroll.fecha)}
-                                        </td>
-                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                          {formatTime(payroll.horaInicio)} - {formatTime(payroll.horaFin)}
-                                        </td>
-                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                          {payroll.horasTrabajadas}h {payroll.minutosTrabajados}m
-                                        </td>
-                                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                                          {formatCurrency(calculateCorrectSalarioNeto(payroll))}
-                                        </td>
-                                        <td className="px-6 py-4 whitespace-nowrap">
-                                          <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getEstadoBadge(payroll.estado)}`}>
-                                            {payroll.estado}
-                                          </span>
-                                        </td>
-                                        <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                          <div className="flex justify-end space-x-2">
-                                            <Button
-                                              variant="outline"
-                                              size="sm"
-                                              onClick={() => handleViewDetails(payroll)}
-                                            >
-                                              Ver
-                                            </Button>
-                                            {hasPermission('UPDATE_PAYROLL') && (isAdmin || payroll.estado === 'PENDIENTE') && (
-                                              <Button
-                                                variant="outline"
-                                                size="sm"
-                                                onClick={() => handleEdit(payroll)}
-                                                disabled={!isAdmin && payroll.estado !== 'PENDIENTE'}
-                                              >
-                                                <Edit className="h-4 w-4" />
-                                              </Button>
-                                            )}
-                                            {hasPermission('DELETE_PAYROLL') && (isAdmin || payroll.estado === 'PENDIENTE') && (
-                                              <Button
-                                                variant="outline"
-                                                size="sm"
-                                                onClick={() => handleDelete(payroll)}
-                                                className="text-red-600 hover:text-red-700"
-                                              >
-                                                <Trash2 className="h-4 w-4" />
-                                              </Button>
-                                            )}
+                              {/* Desktop list */}
+                              <div className="hidden lg:block">
+                                <div className="px-6 py-3 bg-gray-50 border-b border-gray-200">
+                                  <div className="grid grid-cols-4 gap-4 text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    <div>Empleado</div>
+                                    <div>Estado</div>
+                                    <div>Total Ganado</div>
+                                    <div className="text-right">Registros</div>
+                                  </div>
+                                </div>
+                                <div className="divide-y divide-gray-200">
+                                  {group.employees.map((empData, index) => (
+                                    <div key={empData.employee?.id || index} className="px-6 py-4 hover:bg-gray-50">
+                                      <div className="grid grid-cols-4 gap-4 items-center">
+                                        <div>
+                                          <div className="text-sm font-medium text-gray-900">
+                                            {empData.employee?.user?.nombre || 'Usuario'} {empData.employee?.user?.apellido || ''}
                                           </div>
-                                        </td>
-                                      </tr>
-                                    ))}
-                                  </tbody>
-                                </table>
+                                          <div className="text-sm text-gray-500">
+                                            {empData.employee?.user?.correo || 'N/A'}
+                                          </div>
+                                        </div>
+                                        <div>
+                                          <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getEstadoBadge(empData.status)}`}>
+                                            {empData.status}
+                                          </span>
+                                        </div>
+                                        <div className="text-sm font-medium text-gray-900">
+                                          {formatCurrency(empData.totalEarnings)}
+                                        </div>
+                                        <div className="text-right text-sm text-gray-500">
+                                          {empData.recordCount} día{empData.recordCount !== 1 ? 's' : ''}
+                                        </div>
+                                      </div>
+                                    </div>
+                                  ))}
+                                </div>
                               </div>
 
                               {/* Mobile cards */}
                               <div className="lg:hidden space-y-4 p-4">
-                                {group.payrolls.map((payroll) => (
-                                  <div key={payroll.id} className="bg-gray-50 border border-gray-200 rounded-lg p-4">
+                                {group.employees.map((empData, index) => (
+                                  <div key={empData.employee?.id || index} className="bg-gray-50 border border-gray-200 rounded-lg p-4">
                                     <div className="flex items-center justify-between mb-3">
                                       <div>
-                                        {isAdmin && (
-                                          <div className="text-sm font-medium text-gray-900 mb-1">
-                                            {payroll.employee?.user?.nombre || 'Usuario'} {payroll.employee?.user?.apellido || ''}
-                                          </div>
-                                        )}
+                                        <div className="text-sm font-medium text-gray-900">
+                                          {empData.employee?.user?.nombre || 'Usuario'} {empData.employee?.user?.apellido || ''}
+                                        </div>
                                         <div className="text-sm text-gray-500">
-                                          {formatDay(payroll.fecha)}
+                                          {empData.recordCount} día{empData.recordCount !== 1 ? 's' : ''} trabajado{empData.recordCount !== 1 ? 's' : ''}
                                         </div>
                                       </div>
-                                      <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getEstadoBadge(payroll.estado)}`}>
-                                        {payroll.estado}
+                                      <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getEstadoBadge(empData.status)}`}>
+                                        {empData.status}
                                       </span>
                                     </div>
                                     
-                                    <div className="grid grid-cols-2 gap-4 text-sm mb-4">
-                                      <div>
-                                        <span className="text-gray-500 flex items-center">
-                                          <Clock className="h-4 w-4 mr-1" />
-                                          Horario:
-                                        </span>
-                                        <div className="font-medium">
-                                          {formatTime(payroll.horaInicio)} - {formatTime(payroll.horaFin)}
-                                        </div>
-                                      </div>
-                                      <div>
-                                        <span className="text-gray-500 flex items-center">
-                                          <DollarSign className="h-4 w-4 mr-1" />
-                                          Salario Neto:
-                                        </span>
-                                        <div className="font-medium">
-                                          {formatCurrency(calculateCorrectSalarioNeto(payroll))}
-                                        </div>
-                                      </div>
-                                    </div>
-
-                                    <div className="flex justify-end space-x-2">
-                                      <Button
-                                        variant="outline"
-                                        size="sm"
-                                        onClick={() => handleViewDetails(payroll)}
-                                      >
-                                        Ver Detalles
-                                      </Button>
-                                      {hasPermission('UPDATE_PAYROLL') && (isAdmin || payroll.estado === 'PENDIENTE') && (
-                                        <Button
-                                          variant="outline"
-                                          size="sm"
-                                          onClick={() => handleEdit(payroll)}
-                                          disabled={!isAdmin && payroll.estado !== 'PENDIENTE'}
-                                        >
-                                          <Edit className="h-4 w-4 mr-1" />
-                                          Editar
-                                        </Button>
-                                      )}
-                                      {hasPermission('DELETE_PAYROLL') && (isAdmin || payroll.estado === 'PENDIENTE') && (
-                                        <Button
-                                          variant="outline"
-                                          size="sm"
-                                          onClick={() => handleDelete(payroll)}
-                                          className="text-red-600 hover:text-red-700"
-                                        >
-                                          <Trash2 className="h-4 w-4" />
-                                        </Button>
-                                      )}
+                                    <div className="flex justify-between items-center">
+                                      <span className="text-gray-500 text-sm">Total del mes:</span>
+                                      <span className="font-medium text-gray-900">
+                                        {formatCurrency(empData.totalEarnings)}
+                                      </span>
                                     </div>
                                   </div>
                                 ))}

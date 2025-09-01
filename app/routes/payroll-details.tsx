@@ -333,30 +333,6 @@ export default function PayrollDetailsPage() {
                   }
                 </p>
               </div>
-              <div className="mt-4 flex space-x-3 md:mt-0 md:ml-4">
-                {/* Botón Pagar nómina - Solo para Super Administrador */}
-                {isAdmin && (
-                  <Button
-                    onClick={() => setShowPaymentModal(true)}
-                    variant="outline"
-                    className="inline-flex items-center"
-                  >
-                    <Banknote className="h-4 w-4 mr-2" />
-                    Pagar Nómina
-                  </Button>
-                )}
-                
-                {/* Botón Nueva Nómina / Registrar Día de Trabajo */}
-                {hasPermission('CREATE_PAYROLL') && (isAdmin || isEmployee) && (
-                  <Button
-                    onClick={() => setShowCreateModal(true)}
-                    className="inline-flex items-center"
-                  >
-                    <Plus className="h-4 w-4 mr-2" />
-                    {isAdmin ? 'Nueva Nómina' : 'Registrar Día de Trabajo'}
-                  </Button>
-                )}
-              </div>
             </div>
 
             {/* Filters */}
