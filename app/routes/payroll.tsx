@@ -195,6 +195,21 @@ export default function PayrollPage() {
     return subtotal - descuento;
   };
 
+  // Función para formatear tiempo a formato 12 horas (HH:MM AM/PM) para Colombia
+  const formatTime = (timeString: string) => {
+    if (!timeString) return '';
+    
+    // Si el tiempo viene en formato HH:MM, convertir a formato 12 horas
+    const [hours, minutes] = timeString.split(':').map(num => parseInt(num, 10));
+    
+    if (isNaN(hours) || isNaN(minutes)) return timeString;
+    
+    const period = hours >= 12 ? 'PM' : 'AM';
+    const displayHours = hours === 0 ? 12 : hours > 12 ? hours - 12 : hours;
+    
+    return `${displayHours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')} ${period}`;
+  };
+
   const getEstadoBadge = (estado: 'PENDIENTE' | 'PROCESADA' | 'PAGADA') => {
     const badges = {
       PENDIENTE: 'bg-yellow-100 text-yellow-800',
@@ -506,7 +521,7 @@ export default function PayrollPage() {
                                           </td>
                                           <td className="px-6 py-4 whitespace-nowrap text-center">
                                             <div className="text-sm text-gray-900">
-                                              {payroll.horaInicio} - {payroll.horaFin}
+                                              {formatTime(payroll.horaInicio)} - {formatTime(payroll.horaFin)}
                                             </div>
                                           </td>
                                           <td className="px-6 py-4 whitespace-nowrap text-center">
@@ -591,7 +606,7 @@ export default function PayrollPage() {
                                           Día {getDayOnly(payroll.fecha)}
                                         </p>
                                         <p className="text-xs text-gray-500 mt-1">
-                                          {payroll.horaInicio} - {payroll.horaFin}
+                                          {formatTime(payroll.horaInicio)} - {formatTime(payroll.horaFin)}
                                         </p>
                                       </div>
                                       <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getEstadoBadge(payroll.estado)}`}>
