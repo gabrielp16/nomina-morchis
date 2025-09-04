@@ -151,6 +151,17 @@ export default function PayrollPage() {
     }).format(value);
   };
 
+  // Función específica para formatear el Total (salario neto) redondeado hacia arriba a la quinta decena
+  const formatTotal = (value: number) => {
+    const roundedValue = Math.ceil(value / 50) * 50;
+    return new Intl.NumberFormat('es-CO', {
+      style: 'currency',
+      currency: 'COP',
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0,
+    }).format(roundedValue);
+  };
+
   const formatDate = (dateInput: string | Date) => {
     if (typeof dateInput === 'string') {
       if (dateInput.includes('T') || dateInput.includes('Z')) {
@@ -486,10 +497,10 @@ export default function PayrollPage() {
                                           Horas
                                         </th>
                                         <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                          Salario Base
+                                          Salario
                                         </th>
                                         <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                          Total Consumos
+                                          Consumos
                                         </th>
                                         <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
                                           Adelantos
@@ -501,7 +512,7 @@ export default function PayrollPage() {
                                           Deuda Morchis
                                         </th>
                                         <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                          Salario Neto
+                                          Total
                                         </th>
                                         <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
                                           Estado
@@ -556,7 +567,7 @@ export default function PayrollPage() {
                                           </td>
                                           <td className="px-6 py-4 whitespace-nowrap text-right">
                                             <div className="text-sm font-bold text-green-600">
-                                              {formatCurrency(payroll.salarioNeto)}
+                                              {formatTotal(payroll.salarioNeto)}
                                             </div>
                                           </td>
                                           <td className="px-6 py-4 whitespace-nowrap text-center">
@@ -622,13 +633,13 @@ export default function PayrollPage() {
                                         </p>
                                       </div>
                                       <div>
-                                        <p className="text-gray-500">Salario Base</p>
+                                        <p className="text-gray-500">Salario</p>
                                         <p className="font-medium">
                                           {formatCurrency(payroll.salarioBruto)}
                                         </p>
                                       </div>
                                       <div>
-                                        <p className="text-gray-500">Total Consumos</p>
+                                        <p className="text-gray-500">Consumos</p>
                                         <p className="font-medium text-orange-600">
                                           {formatCurrency(calculateTotalConsumos(payroll))}
                                         </p>
@@ -655,9 +666,9 @@ export default function PayrollPage() {
                                     
                                     <div className="flex items-center justify-between pt-3 border-t border-gray-200">
                                       <div>
-                                        <p className="text-xs text-gray-500">Salario Neto</p>
+                                        <p className="text-xs text-gray-500">Total</p>
                                         <p className="text-lg font-bold text-green-600">
-                                          {formatCurrency(payroll.salarioNeto)}
+                                          {formatTotal(payroll.salarioNeto)}
                                         </p>
                                       </div>
                                       <div className="flex items-center space-x-3">
