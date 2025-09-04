@@ -187,6 +187,14 @@ export default function PayrollPage() {
     return date.getDate().toString();
   };
 
+  // Función para calcular el total de consumos
+  const calculateTotalConsumos = (payroll: Payroll) => {
+    if (!payroll.consumos || payroll.consumos.length === 0) return 0;
+    const subtotal = payroll.consumos.reduce((sum, consumo) => sum + consumo.valor, 0);
+    const descuento = subtotal * 0.15; // 15% de descuento
+    return subtotal - descuento;
+  };
+
   const getEstadoBadge = (estado: 'PENDIENTE' | 'PROCESADA' | 'PAGADA') => {
     const badges = {
       PENDIENTE: 'bg-yellow-100 text-yellow-800',
@@ -466,6 +474,18 @@ export default function PayrollPage() {
                                           Salario Base
                                         </th>
                                         <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                          Total Consumos
+                                        </th>
+                                        <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                          Adelantos
+                                        </th>
+                                        <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                          Descuadre
+                                        </th>
+                                        <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                          Deuda Morchis
+                                        </th>
+                                        <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
                                           Salario Neto
                                         </th>
                                         <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -497,6 +517,26 @@ export default function PayrollPage() {
                                           <td className="px-6 py-4 whitespace-nowrap text-right">
                                             <div className="text-sm font-medium text-gray-900">
                                               {formatCurrency(payroll.salarioBruto)}
+                                            </div>
+                                          </td>
+                                          <td className="px-6 py-4 whitespace-nowrap text-right">
+                                            <div className="text-sm font-medium text-orange-600">
+                                              {formatCurrency(calculateTotalConsumos(payroll))}
+                                            </div>
+                                          </td>
+                                          <td className="px-6 py-4 whitespace-nowrap text-right">
+                                            <div className="text-sm font-medium text-purple-600">
+                                              {formatCurrency(payroll.adelantoNomina)}
+                                            </div>
+                                          </td>
+                                          <td className="px-6 py-4 whitespace-nowrap text-right">
+                                            <div className="text-sm font-medium text-red-600">
+                                              {formatCurrency(payroll.descuadre || 0)}
+                                            </div>
+                                          </td>
+                                          <td className="px-6 py-4 whitespace-nowrap text-right">
+                                            <div className="text-sm font-medium text-indigo-600">
+                                              {formatCurrency(payroll.deudaMorchis)}
                                             </div>
                                           </td>
                                           <td className="px-6 py-4 whitespace-nowrap text-right">
@@ -570,6 +610,30 @@ export default function PayrollPage() {
                                         <p className="text-gray-500">Salario Base</p>
                                         <p className="font-medium">
                                           {formatCurrency(payroll.salarioBruto)}
+                                        </p>
+                                      </div>
+                                      <div>
+                                        <p className="text-gray-500">Total Consumos</p>
+                                        <p className="font-medium text-orange-600">
+                                          {formatCurrency(calculateTotalConsumos(payroll))}
+                                        </p>
+                                      </div>
+                                      <div>
+                                        <p className="text-gray-500">Adelantos</p>
+                                        <p className="font-medium text-purple-600">
+                                          {formatCurrency(payroll.adelantoNomina)}
+                                        </p>
+                                      </div>
+                                      <div>
+                                        <p className="text-gray-500">Descuadre</p>
+                                        <p className="font-medium text-red-600">
+                                          {formatCurrency(payroll.descuadre || 0)}
+                                        </p>
+                                      </div>
+                                      <div>
+                                        <p className="text-gray-500">Deuda Morchis</p>
+                                        <p className="font-medium text-indigo-600">
+                                          {formatCurrency(payroll.deudaMorchis)}
                                         </p>
                                       </div>
                                     </div>
