@@ -477,7 +477,7 @@ export default function PayrollPage() {
                 <div className="mt-4 md:mt-0 md:ml-4 flex space-x-3">
                   <Button
                     onClick={() => setShowCreateModal(true)}
-                    className="bg-blue-600 hover:bg-blue-700 text-white flex items-center space-x-2"
+                    className="bg-blue-600 hover:bg-blue-700 text-white flex items-center space-x-2 cursor-pointer"
                   >
                     <Plus className="h-4 w-4" />
                     <span>{isAdmin ? 'Agregar Registro' : 'Agregar Mi Registro'}</span>
@@ -537,7 +537,7 @@ export default function PayrollPage() {
                     variant="outline"
                     size="sm"
                     onClick={clearFilters}
-                    className="flex-1"
+                    className="flex-1 cursor-pointer"
                   >
                     Limpiar
                   </Button>
@@ -550,6 +550,7 @@ export default function PayrollPage() {
                     Fecha desde
                   </label>
                   <Input
+                    className='cursor-pointer'
                     type="date"
                     value={filters.fechaInicio}
                     onChange={(e) => setFilters(prev => ({ ...prev, fechaInicio: e.target.value }))}
@@ -560,6 +561,7 @@ export default function PayrollPage() {
                     Fecha hasta
                   </label>
                   <Input
+                    className='cursor-pointer'
                     type="date"
                     value={filters.fechaFin}
                     onChange={(e) => setFilters(prev => ({ ...prev, fechaFin: e.target.value }))}
@@ -599,7 +601,7 @@ export default function PayrollPage() {
                           {/* Header del acordeón de mes */}
                           <button
                             onClick={() => toggleMonthCollapse(monthGroup.monthKey)}
-                            className="w-full px-6 py-4 flex items-center justify-between hover:bg-gray-50 transition-colors"
+                            className="w-full px-6 py-4 flex items-center justify-between hover:bg-gray-50 transition-colors cursor-pointer"
                           >
                             <div className="flex items-center space-x-4">
                               <div className="flex items-center">
@@ -635,7 +637,7 @@ export default function PayrollPage() {
                                   {/* Header de quincena */}
                                   <button
                                     onClick={() => toggleFortnightCollapse(`${monthGroup.monthKey}-${fortnightGroup.fortnightKey}`)}
-                                    className="w-full px-8 py-2 flex items-center justify-between hover:bg-gray-100 transition-colors"
+                                    className="w-full px-8 py-2 flex items-center justify-between hover:bg-gray-100 transition-colors cursor-pointer"
                                   >
                                     <div className="flex items-center space-x-3">
                                       <div className="flex items-center">
@@ -698,7 +700,7 @@ export default function PayrollPage() {
                                                 <th className="px-1 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
                                                   Total
                                                 </th>
-                                                <th className="px-1 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                                <th className="px-1 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider  border-l border-gray-200">
                                                   Acciones
                                                 </th>
                                               </tr>
@@ -751,30 +753,30 @@ export default function PayrollPage() {
                                                       {payroll.estado}
                                                     </span>
                                                   </td>
-                                                  <td className="px-1 py-3 whitespace-nowrap text-right">
+                                                  <td className="px-3 py-3 whitespace-nowrap text-right">
                                                     <div className="text-sm font-bold text-gray-600">
                                                       {formatTotal(calculateRealSalarioNeto(payroll))}
                                                     </div>
                                                   </td>
-                                                  <td className="px-1 py-3 whitespace-nowrap text-center">
+                                                  <td className="px-1 py-3 whitespace-nowrap text-center border-l border-gray-200">
                                                     <div className="flex items-center justify-center space-x-2">
                                                       <button
                                                         onClick={() => handleViewDetailsById(payroll.id)}
-                                                        className="text-indigo-600 hover:text-indigo-800 transition-colors"
+                                                        className="text-blue-600 hover:text-blue-800 transition-colors cursor-pointer"
                                                         title="Ver detalle"
                                                       >
                                                         <Eye className="h-4 w-4" />
                                                       </button>
                                                       <button
                                                         onClick={() => handleEditById(payroll.id)}
-                                                        className="text-blue-600 hover:text-blue-800 transition-colors"
+                                                        className="text-blue-600 hover:text-blue-800 transition-colors cursor-pointer"
                                                         title="Editar"
                                                       >
                                                         <Edit className="h-4 w-4" />
                                                       </button>
                                                       <button
                                                         onClick={() => handleDeleteById(payroll.id)}
-                                                        className="text-red-600 hover:text-red-800 transition-colors"
+                                                        className="text-red-600 hover:text-red-800 transition-colors cursor-pointer"
                                                         title="Eliminar"
                                                       >
                                                         <Trash2 className="h-4 w-4" />
@@ -855,21 +857,21 @@ export default function PayrollPage() {
                                               <div className="flex items-center space-x-3">
                                                 <button
                                                   onClick={() => handleViewDetailsById(payroll.id)}
-                                                  className="text-indigo-600 hover:text-indigo-800 transition-colors"
+                                                  className="text-blue-600 hover:text-blue-800 transition-colors cursor-pointer"
                                                   title="Ver detalle"
                                                 >
                                                   <Eye className="h-4 w-4" />
                                                 </button>
                                                 <button
                                                   onClick={() => handleEditById(payroll.id)}
-                                                  className="text-blue-600 hover:text-blue-800 transition-colors"
+                                                  className="text-blue-600 hover:text-blue-800 transition-colors cursor-pointer"
                                                   title="Editar"
                                                 >
                                                   <Edit className="h-4 w-4" />
                                                 </button>
                                                 <button
                                                   onClick={() => handleDeleteById(payroll.id)}
-                                                  className="text-red-600 hover:text-red-800 transition-colors"
+                                                  className="text-red-600 hover:text-red-800 transition-colors cursor-pointer"
                                                   title="Eliminar"
                                                 >
                                                   <Trash2 className="h-4 w-4" />
