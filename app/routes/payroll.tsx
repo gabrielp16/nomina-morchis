@@ -692,11 +692,11 @@ export default function PayrollPage() {
                                                 <th className="px-1 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
                                                   Deuda Morchis
                                                 </th>
-                                                <th className="px-1 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                                  Total
-                                                </th>
                                                 <th className="px-1 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
                                                   Estado
+                                                </th>
+                                                <th className="px-1 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                                  Total
                                                 </th>
                                                 <th className="px-1 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
                                                   Acciones
@@ -732,29 +732,29 @@ export default function PayrollPage() {
                                                     </div>
                                                   </td>
                                                   <td className="px-1 py-3 whitespace-nowrap text-right">
-                                                    <div className="text-sm font-medium text-purple-600">
+                                                    <div className="text-sm font-medium text-orange-600">
                                                       {formatCurrency(payroll.adelantoNomina)}
                                                     </div>
                                                   </td>
                                                   <td className="px-1 py-3 whitespace-nowrap text-right">
-                                                    <div className="text-sm font-medium text-red-600">
+                                                    <div className="text-sm font-medium text-orange-600">
                                                       {formatCurrency(payroll.descuadre || 0)}
                                                     </div>
                                                   </td>
                                                   <td className="px-1 py-3 whitespace-nowrap text-right">
-                                                    <div className="text-sm font-medium text-indigo-600">
+                                                    <div className="text-sm font-medium text-green-600">
                                                       {formatCurrency(payroll.deudaMorchis)}
-                                                    </div>
-                                                  </td>
-                                                  <td className="px-1 py-3 whitespace-nowrap text-right">
-                                                    <div className="text-sm font-bold text-green-600">
-                                                      {formatTotal(calculateRealSalarioNeto(payroll))}
                                                     </div>
                                                   </td>
                                                   <td className="px-1 py-3 whitespace-nowrap text-center">
                                                     <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getEstadoBadge(payroll.estado)}`}>
                                                       {payroll.estado}
                                                     </span>
+                                                  </td>
+                                                  <td className="px-1 py-3 whitespace-nowrap text-right">
+                                                    <div className="text-sm font-bold text-gray-600">
+                                                      {formatTotal(calculateRealSalarioNeto(payroll))}
+                                                    </div>
                                                   </td>
                                                   <td className="px-1 py-3 whitespace-nowrap text-center">
                                                     <div className="flex items-center justify-center space-x-2">
