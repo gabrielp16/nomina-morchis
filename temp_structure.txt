@@ -1,0 +1,47 @@
+Verificando estructura JSX:
+
+return (
+  <ProtectedRoute requiredPermissions={["READ_PAYROLL"]}>
+    <div className="min-h-screen bg-gray-50">
+      <div className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
+        <div className="px-4 py-6 sm:px-0">
+          {/* Content */}
+          <div className="bg-white shadow overflow-hidden sm:rounded-md">
+            <div className="px-4 py-5 sm:p-6">
+              {loading ? (
+                // Loading
+              ) : payrolls.length === 0 ? (
+                // No data
+              ) : (
+                <>
+                  <div className="space-y-4">
+                    {groupPayrollsByMonthAndFortnight(payrolls).map((monthGroup) => (
+                      <div key={monthGroup.monthKey}>
+                        {/* Month content */}
+                        {monthGroup.fortnights.map((fortnightGroup) => (
+                          <div key={fortnightGroup.fortnightKey}>
+                            {/* Fortnight content */}
+                            <div>
+                              {fortnightGroup.payrolls.map((payroll) => (
+                                <div key={payroll.id}>
+                                  {/* Payroll content */}
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    ))}
+                  </div>
+                </>
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    {/* Modals */}
+    
+  </ProtectedRoute>
+);
