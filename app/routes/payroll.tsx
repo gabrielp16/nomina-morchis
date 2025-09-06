@@ -1,5 +1,5 @@
 import { useState, useEffect, type ChangeEvent } from 'react';
-import { Plus, Search, Edit, Trash2, Calendar, Clock, DollarSign, Banknote, ChevronDown, ChevronRight, Eye } from 'lucide-react';
+import { Plus, Search, Edit, Trash2, Calendar, ChevronDown, ChevronRight, Eye } from 'lucide-react';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { Select } from '../components/ui/select';
@@ -34,7 +34,9 @@ export default function PayrollPage() {
   const [showDetailsModal, setShowDetailsModal] = useState(false);
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [selectedPayroll, setSelectedPayroll] = useState<Payroll | null>(null);
-  const [collapsedEmployees, setCollapsedEmployees] = useState<Set<string>>(new Set());
+  const [collapsedMonths, setCollapsedMonths] = useState<Set<string>>(new Set());
+  const [collapsedFortnights, setCollapsedFortnights] = useState<Set<string>>(new Set());
+  const [isInitialized, setIsInitialized] = useState(false);
   const { confirm, confirmState, handleConfirm, handleCancel } = useConfirm();
   const { success, error: showError } = useToast();
 
@@ -45,6 +47,18 @@ export default function PayrollPage() {
       loadPayrolls();
     }
   }, [search, filters, isAdmin, isEmployee]);
+
+  // useEffect para inicializar los estados de colapso cuando cambian los payrolls
+  useEffect(() => {
+    if (payrolls.length > 0 && !isInitialized) {
+      const { collapsedMonths: newCollapsedMonths, collapsedFortnights: newCollapsedFortnights } = 
+        initializeCollapsedStates(payrolls);
+      
+      setCollapsedMonths(newCollapsedMonths);
+      setCollapsedFortnights(newCollapsedFortnights);
+      setIsInitialized(true);
+    }
+  }, [payrolls, isInitialized]);
 
   const loadPayrolls = async () => {
     setLoading(true);
@@ -206,6 +220,14 @@ export default function PayrollPage() {
     return subtotal - descuento;
   };
 
+  // Función para calcular el salario neto real como en el modal de detalles
+  const calculateRealSalarioNeto = (payroll: Payroll) => {
+    const subtotalConsumos = payroll.consumos?.reduce((sum, consumo) => sum + consumo.valor, 0) || 0;
+    const descuentoConsumos = subtotalConsumos * 0.15;
+    const totalConsumos = subtotalConsumos - descuentoConsumos;
+    return payroll.salarioBruto - totalConsumos - payroll.adelantoNomina - (payroll.descuadre || 0) + payroll.deudaMorchis;
+  };
+
   // Función para formatear tiempo a formato 12 horas (HH:MM AM/PM) para Colombia
   const formatTime = (timeString: string) => {
     if (!timeString) return '';
@@ -240,46 +262,196 @@ export default function PayrollPage() {
     setSearch('');
   };
 
-  // Función para agrupar payrolls por empleado
-  const groupPayrollsByEmployee = (payrolls: Payroll[]) => {
-    const employeeGroups: { [employeeId: string]: Payroll[] } = {};
+  // Función auxiliar para obtener partes de fecha sin problemas de zona horaria
+  const getLocalDateParts = (dateInput: string | Date) => {
+    let date: Date;
+    
+    if (typeof dateInput === 'string') {
+      if (dateInput.includes('T') || dateInput.includes('Z')) {
+        const datePart = dateInput.split('T')[0];
+        const [year, month, day] = datePart.split('-').map(Number);
+        date = new Date(year, month - 1, day);
+      } else {
+        const [year, month, day] = dateInput.split('-').map(Number);
+        date = new Date(year, month - 1, day);
+      }
+    } else {
+      date = dateInput;
+    }
+    
+    return {
+      year: date.getFullYear(),
+      month: date.getMonth(),
+      day: date.getDate()
+    };
+  };
+
+  // Función para formatear el mes y año
+  const formatMonthYear = (monthKey: string) => {
+    const [year, month] = monthKey.split('-');
+    const monthNames = [
+      'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
+      'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'
+    ];
+    return `${monthNames[parseInt(month) - 1]} ${year}`;
+  };
+
+  // Función para obtener el mes y quincena actuales
+  const getCurrentMonthAndFortnight = () => {
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = now.getMonth() + 1; // getMonth() devuelve 0-11, necesitamos 1-12
+    const day = now.getDate();
+    
+    const monthKey = `${year}-${month.toString().padStart(2, '0')}`;
+    const fortnight = day <= 15 ? 'primera' : 'segunda';
+    const fortnightKey = `${monthKey}-${fortnight}`;
+    
+    return { monthKey, fortnightKey };
+  };
+
+  // Función para inicializar los estados de colapso
+  const initializeCollapsedStates = (payrolls: Payroll[]) => {
+    const { monthKey: currentMonthKey } = getCurrentMonthAndFortnight();
+    
+    // Obtener todos los meses únicos de los datos
+    const allMonths = new Set<string>();
+    const allFortnights = new Set<string>();
     
     payrolls.forEach(payroll => {
-      const employeeId = payroll.employee?.id || 'sin-empleado';
+      const { year, month, day } = getLocalDateParts(payroll.fecha);
+      const monthKey = `${year}-${(month + 1).toString().padStart(2, '0')}`;
+      const fortnight = day <= 15 ? 'primera' : 'segunda';
+      const fortnightKey = `${monthKey}-${fortnight}`;
       
-      if (!employeeGroups[employeeId]) {
-        employeeGroups[employeeId] = [];
+      allMonths.add(monthKey);
+      allFortnights.add(fortnightKey);
+    });
+    
+    // Crear sets con todos los meses/quincenas colapsados excepto los actuales
+    const collapsedMonths = new Set<string>();
+    const collapsedFortnights = new Set<string>();
+    
+    allMonths.forEach(monthKey => {
+      if (monthKey !== currentMonthKey) {
+        collapsedMonths.add(monthKey);
+      }
+    });
+    
+    const { fortnightKey: currentFortnightKey } = getCurrentMonthAndFortnight();
+    allFortnights.forEach(fortnightKey => {
+      if (fortnightKey !== currentFortnightKey) {
+        collapsedFortnights.add(fortnightKey);
+      }
+    });
+    
+    return { collapsedMonths, collapsedFortnights };
+  };
+
+  // Función para agrupar payrolls por mes y quincena
+  const groupPayrollsByMonthAndFortnight = (payrolls: Payroll[]) => {
+    const monthGroups: { [monthKey: string]: { [fortnightKey: string]: Payroll[] } } = {};
+    
+    payrolls.forEach(payroll => {
+      // Usar la función auxiliar para obtener las partes de la fecha sin problemas de zona horaria
+      const { year, month, day } = getLocalDateParts(payroll.fecha);
+      
+      const monthKey = `${year}-${(month + 1).toString().padStart(2, '0')}`;
+      const fortnight = day <= 15 ? 'primera' : 'segunda';
+      
+      // Inicializar estructuras si no existen
+      if (!monthGroups[monthKey]) {
+        monthGroups[monthKey] = {};
+      }
+      if (!monthGroups[monthKey][fortnight]) {
+        monthGroups[monthKey][fortnight] = [];
       }
       
-      employeeGroups[employeeId].push(payroll);
+      monthGroups[monthKey][fortnight].push(payroll);
     });
 
-    // Convertir a array y ordenar por nombre del empleado
-    return Object.entries(employeeGroups).map(([employeeId, payrolls]) => ({
-      employeeId,
-      employee: payrolls[0]?.employee,
-      payrolls: payrolls.sort((a, b) => new Date(b.fecha).getTime() - new Date(a.fecha).getTime()),
-      totalEarnings: payrolls.reduce((sum, p) => sum + p.salarioNeto, 0),
-      totalRecords: payrolls.length,
-      pendingRecords: payrolls.filter(p => p.estado === 'PENDIENTE').length,
-      processedRecords: payrolls.filter(p => p.estado === 'PROCESADA').length,
-      paidRecords: payrolls.filter(p => p.estado === 'PAGADA').length
-    })).sort((a, b) => {
-      const nameA = `${a.employee?.user?.nombre || ''} ${a.employee?.user?.apellido || ''}`;
-      const nameB = `${b.employee?.user?.nombre || ''} ${b.employee?.user?.apellido || ''}`;
-      return nameA.localeCompare(nameB);
+    // Ordenar grupos por fecha (más reciente primero)
+    const sortedMonthKeys = Object.keys(monthGroups).sort((a, b) => b.localeCompare(a));
+    
+    return sortedMonthKeys.map(monthKey => {
+      const fortnights = monthGroups[monthKey];
+      const sortedFortnights = Object.keys(fortnights).sort((a, b) => {
+        // Ordenar quincenas: primera antes que segunda
+        if (a === 'primera' && b === 'segunda') return -1;
+        if (a === 'segunda' && b === 'primera') return 1;
+        return 0;
+      });
+
+      const allPayrolls = Object.values(fortnights).flat();
+
+      return {
+        monthKey,
+        monthYear: formatMonthYear(monthKey),
+        fortnights: sortedFortnights.map(fortnightKey => {
+          // Calcular total real de la quincena sumando cada payroll calculado correctamente
+          const totalEarnings = fortnights[fortnightKey].reduce((sum, payroll) => {
+            // Calcular el salario neto real como en el modal de detalles
+            const subtotalConsumos = payroll.consumos?.reduce((sum, consumo) => sum + consumo.valor, 0) || 0;
+            const descuentoConsumos = subtotalConsumos * 0.15;
+            const totalConsumos = subtotalConsumos - descuentoConsumos;
+            const salarioNetoReal = payroll.salarioBruto - totalConsumos - payroll.adelantoNomina - (payroll.descuadre || 0) + payroll.deudaMorchis;
+            return sum + salarioNetoReal;
+          }, 0);
+          const roundedTotalEarnings = Math.ceil(totalEarnings / 50) * 50;
+          
+          return {
+            fortnightKey,
+            fortnightName: fortnightKey === 'primera' ? 'Primera Quincena' : 'Segunda Quincena',
+            payrolls: fortnights[fortnightKey].sort((a, b) => {
+              // Ordenar por fecha dentro del grupo
+              const dateA = new Date(a.fecha);
+              const dateB = new Date(b.fecha);
+              return dateB.getTime() - dateA.getTime();
+            }),
+            totalPayrolls: fortnights[fortnightKey].length,
+            totalEarnings: roundedTotalEarnings,
+            pendingRecords: fortnights[fortnightKey].filter(p => p.estado === 'PENDIENTE').length,
+            processedRecords: fortnights[fortnightKey].filter(p => p.estado === 'PROCESADA').length,
+            paidRecords: fortnights[fortnightKey].filter(p => p.estado === 'PAGADA').length
+          };
+        }),
+        // Totales del mes completo
+        totalPayrolls: allPayrolls.length,
+        totalEarnings: Math.ceil(allPayrolls.reduce((sum, payroll) => {
+          // Calcular el salario neto real como en el modal de detalles
+          const subtotalConsumos = payroll.consumos?.reduce((sum, consumo) => sum + consumo.valor, 0) || 0;
+          const descuentoConsumos = subtotalConsumos * 0.15;
+          const totalConsumos = subtotalConsumos - descuentoConsumos;
+          const salarioNetoReal = payroll.salarioBruto - totalConsumos - payroll.adelantoNomina - (payroll.descuadre || 0) + payroll.deudaMorchis;
+          return sum + salarioNetoReal;
+        }, 0) / 50) * 50,
+        pendingRecords: allPayrolls.filter(p => p.estado === 'PENDIENTE').length,
+        processedRecords: allPayrolls.filter(p => p.estado === 'PROCESADA').length,
+        paidRecords: allPayrolls.filter(p => p.estado === 'PAGADA').length
+      };
     });
   };
 
-  // Función para alternar el estado de colapso de un empleado
-  const toggleEmployeeCollapse = (employeeId: string) => {
-    const newCollapsed = new Set(collapsedEmployees);
-    if (newCollapsed.has(employeeId)) {
-      newCollapsed.delete(employeeId);
+  // Función para alternar el estado de colapso de un mes
+  const toggleMonthCollapse = (monthKey: string) => {
+    const newCollapsed = new Set(collapsedMonths);
+    if (newCollapsed.has(monthKey)) {
+      newCollapsed.delete(monthKey);
     } else {
-      newCollapsed.add(employeeId);
+      newCollapsed.add(monthKey);
     }
-    setCollapsedEmployees(newCollapsed);
+    setCollapsedMonths(newCollapsed);
+  };
+
+  // Función para alternar el estado de colapso de una quincena
+  const toggleFortnightCollapse = (fortnightKey: string) => {
+    const newCollapsed = new Set(collapsedFortnights);
+    if (newCollapsed.has(fortnightKey)) {
+      newCollapsed.delete(fortnightKey);
+    } else {
+      newCollapsed.add(fortnightKey);
+    }
+    setCollapsedFortnights(newCollapsed);
   };
 
   return (
@@ -420,18 +592,18 @@ export default function PayrollPage() {
                   </div>
                 ) : (
                   <>
-                    {/* Vista agrupada por empleado */}
+                    {/* Vista agrupada por mes y quincena */}
                     <div className="space-y-4">
-                      {groupPayrollsByEmployee(payrolls).map((employeeGroup) => (
-                        <div key={employeeGroup.employeeId} className="bg-white border border-gray-200 rounded-lg shadow-sm">
-                          {/* Header del acordeón de empleado */}
+                      {groupPayrollsByMonthAndFortnight(payrolls).map((monthGroup) => (
+                        <div key={monthGroup.monthKey} className="bg-white border border-gray-200 rounded-lg shadow-sm">
+                          {/* Header del acordeón de mes */}
                           <button
-                            onClick={() => toggleEmployeeCollapse(employeeGroup.employeeId)}
+                            onClick={() => toggleMonthCollapse(monthGroup.monthKey)}
                             className="w-full px-6 py-4 flex items-center justify-between hover:bg-gray-50 transition-colors"
                           >
                             <div className="flex items-center space-x-4">
                               <div className="flex items-center">
-                                {collapsedEmployees.has(employeeGroup.employeeId) ? (
+                                {collapsedMonths.has(monthGroup.monthKey) ? (
                                   <ChevronRight className="h-5 w-5 text-gray-400" />
                                 ) : (
                                   <ChevronDown className="h-5 w-5 text-gray-400" />
@@ -439,265 +611,278 @@ export default function PayrollPage() {
                               </div>
                               
                               <div className="flex items-center space-x-3">
-                                <div className="flex-shrink-0 h-12 w-12 bg-gradient-to-br from-blue-400 to-blue-600 rounded-full flex items-center justify-center">
-                                  <span className="text-lg font-medium text-white">
-                                    {employeeGroup.employee?.user?.nombre?.charAt(0)}{employeeGroup.employee?.user?.apellido?.charAt(0)}
-                                  </span>
-                                </div>
                                 <div className="text-left">
-                                  <h3 className="text-lg font-semibold text-gray-900">
-                                    {employeeGroup.employee?.user?.nombre} {employeeGroup.employee?.user?.apellido}
-                                  </h3>
-                                  <div className="flex items-center space-x-4 text-sm text-gray-500 mt-1">
-                                    <span className="bg-blue-100 text-blue-800 text-xs font-medium px-2.5 py-0.5 rounded-full">
-                                      {employeeGroup.totalRecords} {employeeGroup.totalRecords === 1 ? 'registro' : 'registros'}
-                                    </span>
-                                    {employeeGroup.pendingRecords > 0 && (
-                                      <span className="bg-yellow-100 text-yellow-800 text-xs font-medium px-2.5 py-0.5 rounded-full">
-                                        {employeeGroup.pendingRecords} pendiente{employeeGroup.pendingRecords !== 1 ? 's' : ''}
-                                      </span>
-                                    )}
-                                    {employeeGroup.paidRecords > 0 && (
-                                      <span className="bg-green-100 text-green-800 text-xs font-medium px-2.5 py-0.5 rounded-full">
-                                        {employeeGroup.paidRecords} pagado{employeeGroup.paidRecords !== 1 ? 's' : ''}
-                                      </span>
-                                    )}
-                                  </div>
+                                  <h2 className="text-xl font-semibold text-gray-900">{monthGroup.monthYear}</h2>
                                 </div>
                               </div>
                             </div>
                             
                             <div className="text-right">
-                              <div className="text-xl font-bold text-gray-900">
-                                {formatCurrency(employeeGroup.totalEarnings)}
+                              <div className="text-2xl font-bold text-gray-900">
+                                {formatCurrency(monthGroup.totalEarnings)}
                               </div>
                               <div className="text-sm text-gray-500">
-                                Total acumulado
+                                Total del mes
                               </div>
                             </div>
                           </button>
 
-                          {/* Contenido del acordeón - Lista de registros */}
-                          {!collapsedEmployees.has(employeeGroup.employeeId) && (
+                          {/* Contenido del acordeón - Quincenas */}
+                          {!collapsedMonths.has(monthGroup.monthKey) && (
                             <div className="border-t border-gray-200 bg-gray-50">
-                              
-                              {/* Vista Desktop - Tabla */}
-                              <div className="hidden md:block">
-                                <div className="overflow-x-auto">
-                                  <table className="min-w-full bg-white">
-                                    <thead className="bg-gray-50 border-b border-gray-200">
-                                      <tr>
-                                        <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                          Día
-                                        </th>
-                                        <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                          Horario
-                                        </th>
-                                        <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                          Horas
-                                        </th>
-                                        <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                          Salario
-                                        </th>
-                                        <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                          Consumos
-                                        </th>
-                                        <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                          Adelantos
-                                        </th>
-                                        <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                          Descuadre
-                                        </th>
-                                        <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                          Deuda Morchis
-                                        </th>
-                                        <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                          Total
-                                        </th>
-                                        <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                          Estado
-                                        </th>
-                                        <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                          Acciones
-                                        </th>
-                                      </tr>
-                                    </thead>
-                                    <tbody className="divide-y divide-gray-200">
-                                      {employeeGroup.payrolls.map((payroll) => (
-                                        <tr key={payroll.id} className="hover:bg-gray-50 transition-colors">
-                                          <td className="px-6 py-4 whitespace-nowrap text-center">
-                                            <div className="text-sm font-medium text-gray-900">
-                                              {getDayOnly(payroll.fecha)}
-                                            </div>
-                                          </td>
-                                          <td className="px-6 py-4 whitespace-nowrap text-center">
-                                            <div className="text-sm text-gray-900">
-                                              {formatTime(payroll.horaInicio)} - {formatTime(payroll.horaFin)}
-                                            </div>
-                                          </td>
-                                          <td className="px-6 py-4 whitespace-nowrap text-center">
-                                            <div className="text-sm font-medium text-blue-600">
-                                              {payroll.horasTrabajadas}h {payroll.minutosTrabajados > 0 && `${payroll.minutosTrabajados}m`}
-                                            </div>
-                                          </td>
-                                          <td className="px-6 py-4 whitespace-nowrap text-right">
-                                            <div className="text-sm font-medium text-gray-900">
-                                              {formatCurrency(payroll.salarioBruto)}
-                                            </div>
-                                          </td>
-                                          <td className="px-6 py-4 whitespace-nowrap text-right">
-                                            <div className="text-sm font-medium text-orange-600">
-                                              {formatCurrency(calculateTotalConsumos(payroll))}
-                                            </div>
-                                          </td>
-                                          <td className="px-6 py-4 whitespace-nowrap text-right">
-                                            <div className="text-sm font-medium text-purple-600">
-                                              {formatCurrency(payroll.adelantoNomina)}
-                                            </div>
-                                          </td>
-                                          <td className="px-6 py-4 whitespace-nowrap text-right">
-                                            <div className="text-sm font-medium text-red-600">
-                                              {formatCurrency(payroll.descuadre || 0)}
-                                            </div>
-                                          </td>
-                                          <td className="px-6 py-4 whitespace-nowrap text-right">
-                                            <div className="text-sm font-medium text-indigo-600">
-                                              {formatCurrency(payroll.deudaMorchis)}
-                                            </div>
-                                          </td>
-                                          <td className="px-6 py-4 whitespace-nowrap text-right">
-                                            <div className="text-sm font-bold text-green-600">
-                                              {formatTotal(payroll.salarioNeto)}
-                                            </div>
-                                          </td>
-                                          <td className="px-6 py-4 whitespace-nowrap text-center">
-                                            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getEstadoBadge(payroll.estado)}`}>
-                                              {payroll.estado}
-                                            </span>
-                                          </td>
-                                          <td className="px-6 py-4 whitespace-nowrap text-center">
-                                            <div className="flex items-center justify-center space-x-2">
-                                              <button
-                                                onClick={() => handleViewDetailsById(payroll.id)}
-                                                className="text-indigo-600 hover:text-indigo-800 transition-colors"
-                                                title="Ver detalle"
-                                              >
-                                                <Eye className="h-4 w-4" />
-                                              </button>
-                                              <button
-                                                onClick={() => handleEditById(payroll.id)}
-                                                className="text-blue-600 hover:text-blue-800 transition-colors"
-                                                title="Editar"
-                                              >
-                                                <Edit className="h-4 w-4" />
-                                              </button>
-                                              <button
-                                                onClick={() => handleDeleteById(payroll.id)}
-                                                className="text-red-600 hover:text-red-800 transition-colors"
-                                                title="Eliminar"
-                                              >
-                                                <Trash2 className="h-4 w-4" />
-                                              </button>
-                                            </div>
-                                          </td>
-                                        </tr>
-                                      ))}
-                                    </tbody>
-                                  </table>
-                                </div>
-                              </div>
+                              {monthGroup.fortnights.map((fortnightGroup, fortnightIndex) => (
+                                <div key={`${monthGroup.monthKey}-${fortnightGroup.fortnightKey}`} className="border-b border-gray-200 last:border-b-0">
+                                  {/* Header de quincena */}
+                                  <button
+                                    onClick={() => toggleFortnightCollapse(`${monthGroup.monthKey}-${fortnightGroup.fortnightKey}`)}
+                                    className="w-full px-8 py-2 flex items-center justify-between hover:bg-gray-100 transition-colors"
+                                  >
+                                    <div className="flex items-center space-x-3">
+                                      <div className="flex items-center">
+                                        {collapsedFortnights.has(`${monthGroup.monthKey}-${fortnightGroup.fortnightKey}`) ? (
+                                          <ChevronRight className="h-4 w-4 text-gray-400" />
+                                        ) : (
+                                          <ChevronDown className="h-4 w-4 text-gray-400" />
+                                        )}
+                                      </div>
+                                      <div className="text-left">
+                                        <h3 className="text-lg font-medium text-gray-900">{fortnightGroup.fortnightName}</h3>
+                                      </div>
+                                    </div>
+                                    <div className="text-right">
+                                      <div className="text-lg font-bold text-gray-900">
+                                        {formatCurrency(fortnightGroup.totalEarnings)}
+                                      </div>
+                                      <div className="text-xs text-gray-500">
+                                        Total quincena
+                                      </div>
+                                    </div>
+                                  </button>
 
-                              {/* Vista Mobile - Cards */}
-                              <div className="md:hidden p-4 space-y-3">
-                                {employeeGroup.payrolls.map((payroll) => (
-                                  <div key={payroll.id} className="bg-white border border-gray-200 rounded-lg p-4 shadow-sm">
-                                    <div className="flex items-start justify-between mb-3">
-                                      <div>
-                                        <p className="text-sm font-medium text-gray-900">
-                                          Día {getDayOnly(payroll.fecha)}
-                                        </p>
-                                        <p className="text-xs text-gray-500 mt-1">
-                                          {formatTime(payroll.horaInicio)} - {formatTime(payroll.horaFin)}
-                                        </p>
+                                  {/* Contenido de la quincena - Lista de registros */}
+                                  {!collapsedFortnights.has(`${monthGroup.monthKey}-${fortnightGroup.fortnightKey}`) && (
+                                    <div className="bg-white">
+                                      {/* Vista Desktop - Tabla */}
+                                      <div className="hidden md:block">
+                                        <div className="overflow-x-auto">
+                                          <table className="min-w-full bg-white">
+                                            <thead className="bg-gray-50 border border-gray-200">
+                                              <tr>
+                                                <th className="px-1 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                                  Día
+                                                </th>
+                                                <th className="px-1 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                                  Horario
+                                                </th>
+                                                <th className="px-1 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                                  Horas
+                                                </th>
+                                                <th className="px-1 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                                  Salario
+                                                </th>
+                                                <th className="px-1 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                                  Consumos
+                                                </th>
+                                                <th className="px-1 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                                  Adelantos
+                                                </th>
+                                                <th className="px-1 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                                  Descuadre
+                                                </th>
+                                                <th className="px-1 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                                  Deuda Morchis
+                                                </th>
+                                                <th className="px-1 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                                  Total
+                                                </th>
+                                                <th className="px-1 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                                  Estado
+                                                </th>
+                                                <th className="px-1 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                                  Acciones
+                                                </th>
+                                              </tr>
+                                            </thead>
+                                            <tbody className="divide-y divide-gray-200">
+                                              {fortnightGroup.payrolls.map((payroll) => (
+                                                <tr key={payroll.id} className="hover:bg-gray-50 transition-colors">
+                                                  <td className="px-1 py-3 whitespace-nowrap text-center">
+                                                    <div className="text-sm font-medium text-gray-900">
+                                                      {getDayOnly(payroll.fecha)}
+                                                    </div>
+                                                  </td>
+                                                  <td className="px-1 py-3 whitespace-nowrap text-center">
+                                                    <div className="text-sm text-gray-900">
+                                                      {formatTime(payroll.horaInicio)} - {formatTime(payroll.horaFin)}
+                                                    </div>
+                                                  </td>
+                                                  <td className="px-1 py-3 whitespace-nowrap text-center">
+                                                    <div className="text-sm font-medium text-blue-600">
+                                                      {payroll.horasTrabajadas}h {payroll.minutosTrabajados > 0 && `${payroll.minutosTrabajados}m`}
+                                                    </div>
+                                                  </td>
+                                                  <td className="px-1 py-3 whitespace-nowrap text-right">
+                                                    <div className="text-sm font-medium text-gray-900">
+                                                      {formatCurrency(payroll.salarioBruto)}
+                                                    </div>
+                                                  </td>
+                                                  <td className="px-1 py-3 whitespace-nowrap text-right">
+                                                    <div className="text-sm font-medium text-orange-600">
+                                                      {formatCurrency(calculateTotalConsumos(payroll))}
+                                                    </div>
+                                                  </td>
+                                                  <td className="px-1 py-3 whitespace-nowrap text-right">
+                                                    <div className="text-sm font-medium text-purple-600">
+                                                      {formatCurrency(payroll.adelantoNomina)}
+                                                    </div>
+                                                  </td>
+                                                  <td className="px-1 py-3 whitespace-nowrap text-right">
+                                                    <div className="text-sm font-medium text-red-600">
+                                                      {formatCurrency(payroll.descuadre || 0)}
+                                                    </div>
+                                                  </td>
+                                                  <td className="px-1 py-3 whitespace-nowrap text-right">
+                                                    <div className="text-sm font-medium text-indigo-600">
+                                                      {formatCurrency(payroll.deudaMorchis)}
+                                                    </div>
+                                                  </td>
+                                                  <td className="px-1 py-3 whitespace-nowrap text-right">
+                                                    <div className="text-sm font-bold text-green-600">
+                                                      {formatTotal(calculateRealSalarioNeto(payroll))}
+                                                    </div>
+                                                  </td>
+                                                  <td className="px-1 py-3 whitespace-nowrap text-center">
+                                                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getEstadoBadge(payroll.estado)}`}>
+                                                      {payroll.estado}
+                                                    </span>
+                                                  </td>
+                                                  <td className="px-1 py-3 whitespace-nowrap text-center">
+                                                    <div className="flex items-center justify-center space-x-2">
+                                                      <button
+                                                        onClick={() => handleViewDetailsById(payroll.id)}
+                                                        className="text-indigo-600 hover:text-indigo-800 transition-colors"
+                                                        title="Ver detalle"
+                                                      >
+                                                        <Eye className="h-4 w-4" />
+                                                      </button>
+                                                      <button
+                                                        onClick={() => handleEditById(payroll.id)}
+                                                        className="text-blue-600 hover:text-blue-800 transition-colors"
+                                                        title="Editar"
+                                                      >
+                                                        <Edit className="h-4 w-4" />
+                                                      </button>
+                                                      <button
+                                                        onClick={() => handleDeleteById(payroll.id)}
+                                                        className="text-red-600 hover:text-red-800 transition-colors"
+                                                        title="Eliminar"
+                                                      >
+                                                        <Trash2 className="h-4 w-4" />
+                                                      </button>
+                                                    </div>
+                                                  </td>
+                                                </tr>
+                                              ))}
+                                            </tbody>
+                                          </table>
+                                        </div>
                                       </div>
-                                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getEstadoBadge(payroll.estado)}`}>
-                                        {payroll.estado}
-                                      </span>
+
+                                      {/* Vista Mobile - Cards */}
+                                      <div className="md:hidden p-4 space-y-3">
+                                        {fortnightGroup.payrolls.map((payroll) => (
+                                          <div key={payroll.id} className="bg-white border border-gray-200 rounded-lg p-4 shadow-sm">
+                                            <div className="flex items-start justify-between mb-3">
+                                              <div>
+                                                <p className="text-sm font-medium text-gray-900">
+                                                  Día {getDayOnly(payroll.fecha)}
+                                                </p>
+                                                <p className="text-xs text-gray-500 mt-1">
+                                                  {formatTime(payroll.horaInicio)} - {formatTime(payroll.horaFin)}
+                                                </p>
+                                              </div>
+                                              <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getEstadoBadge(payroll.estado)}`}>
+                                                {payroll.estado}
+                                              </span>
+                                            </div>
+                                            
+                                            <div className="grid grid-cols-2 gap-3 text-sm mb-3">
+                                              <div>
+                                                <p className="text-gray-500">Horas trabajadas</p>
+                                                <p className="font-medium text-blue-600">
+                                                  {payroll.horasTrabajadas}h {payroll.minutosTrabajados > 0 && `${payroll.minutosTrabajados}m`}
+                                                </p>
+                                              </div>
+                                              <div>
+                                                <p className="text-gray-500">Salario</p>
+                                                <p className="font-medium">
+                                                  {formatCurrency(payroll.salarioBruto)}
+                                                </p>
+                                              </div>
+                                              <div>
+                                                <p className="text-gray-500">Consumos</p>
+                                                <p className="font-medium text-orange-600">
+                                                  {formatCurrency(calculateTotalConsumos(payroll))}
+                                                </p>
+                                              </div>
+                                              <div>
+                                                <p className="text-gray-500">Adelantos</p>
+                                                <p className="font-medium text-purple-600">
+                                                  {formatCurrency(payroll.adelantoNomina)}
+                                                </p>
+                                              </div>
+                                              <div>
+                                                <p className="text-gray-500">Descuadre</p>
+                                                <p className="font-medium text-red-600">
+                                                  {formatCurrency(payroll.descuadre || 0)}
+                                                </p>
+                                              </div>
+                                              <div>
+                                                <p className="text-gray-500">Deuda Morchis</p>
+                                                <p className="font-medium text-indigo-600">
+                                                  {formatCurrency(payroll.deudaMorchis)}
+                                                </p>
+                                              </div>
+                                            </div>
+                                            
+                                            <div className="flex items-center justify-between pt-3 border-t border-gray-200">
+                                              <div>
+                                                <p className="text-xs text-gray-500">Total</p>
+                                                <p className="text-lg font-bold text-green-600">
+                                                  {formatTotal(calculateRealSalarioNeto(payroll))}
+                                                </p>
+                                              </div>
+                                              <div className="flex items-center space-x-3">
+                                                <button
+                                                  onClick={() => handleViewDetailsById(payroll.id)}
+                                                  className="text-indigo-600 hover:text-indigo-800 transition-colors"
+                                                  title="Ver detalle"
+                                                >
+                                                  <Eye className="h-4 w-4" />
+                                                </button>
+                                                <button
+                                                  onClick={() => handleEditById(payroll.id)}
+                                                  className="text-blue-600 hover:text-blue-800 transition-colors"
+                                                  title="Editar"
+                                                >
+                                                  <Edit className="h-4 w-4" />
+                                                </button>
+                                                <button
+                                                  onClick={() => handleDeleteById(payroll.id)}
+                                                  className="text-red-600 hover:text-red-800 transition-colors"
+                                                  title="Eliminar"
+                                                >
+                                                  <Trash2 className="h-4 w-4" />
+                                                </button>
+                                              </div>
+                                            </div>
+                                          </div>
+                                        ))}
+                                      </div>
                                     </div>
-                                    
-                                    <div className="grid grid-cols-2 gap-3 text-sm mb-3">
-                                      <div>
-                                        <p className="text-gray-500">Horas trabajadas</p>
-                                        <p className="font-medium text-blue-600">
-                                          {payroll.horasTrabajadas}h {payroll.minutosTrabajados > 0 && `${payroll.minutosTrabajados}m`}
-                                        </p>
-                                      </div>
-                                      <div>
-                                        <p className="text-gray-500">Salario</p>
-                                        <p className="font-medium">
-                                          {formatCurrency(payroll.salarioBruto)}
-                                        </p>
-                                      </div>
-                                      <div>
-                                        <p className="text-gray-500">Consumos</p>
-                                        <p className="font-medium text-orange-600">
-                                          {formatCurrency(calculateTotalConsumos(payroll))}
-                                        </p>
-                                      </div>
-                                      <div>
-                                        <p className="text-gray-500">Adelantos</p>
-                                        <p className="font-medium text-purple-600">
-                                          {formatCurrency(payroll.adelantoNomina)}
-                                        </p>
-                                      </div>
-                                      <div>
-                                        <p className="text-gray-500">Descuadre</p>
-                                        <p className="font-medium text-red-600">
-                                          {formatCurrency(payroll.descuadre || 0)}
-                                        </p>
-                                      </div>
-                                      <div>
-                                        <p className="text-gray-500">Deuda Morchis</p>
-                                        <p className="font-medium text-indigo-600">
-                                          {formatCurrency(payroll.deudaMorchis)}
-                                        </p>
-                                      </div>
-                                    </div>
-                                    
-                                    <div className="flex items-center justify-between pt-3 border-t border-gray-200">
-                                      <div>
-                                        <p className="text-xs text-gray-500">Total</p>
-                                        <p className="text-lg font-bold text-green-600">
-                                          {formatTotal(payroll.salarioNeto)}
-                                        </p>
-                                      </div>
-                                      <div className="flex items-center space-x-3">
-                                        <button
-                                          onClick={() => handleViewDetailsById(payroll.id)}
-                                          className="text-indigo-600 hover:text-indigo-800 transition-colors"
-                                          title="Ver detalle"
-                                        >
-                                          <Eye className="h-4 w-4" />
-                                        </button>
-                                        <button
-                                          onClick={() => handleEditById(payroll.id)}
-                                          className="text-blue-600 hover:text-blue-800 transition-colors"
-                                          title="Editar"
-                                        >
-                                          <Edit className="h-4 w-4" />
-                                        </button>
-                                        <button
-                                          onClick={() => handleDeleteById(payroll.id)}
-                                          className="text-red-600 hover:text-red-800 transition-colors"
-                                          title="Eliminar"
-                                        >
-                                          <Trash2 className="h-4 w-4" />
-                                        </button>
-                                      </div>
-                                    </div>
-                                  </div>
-                                ))}
-                              </div>
+                                  )}
+                                </div>
+                              ))}
                             </div>
                           )}
                         </div>

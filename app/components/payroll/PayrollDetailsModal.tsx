@@ -20,6 +20,17 @@ export function PayrollDetailsModal({ isOpen, onClose, payroll }: PayrollDetails
     }).format(value);
   };
 
+  // Función específica para formatear el Total (salario neto) redondeado hacia arriba a la quinta decena
+  const formatTotal = (value: number) => {
+    const roundedValue = Math.ceil(value / 50) * 50;
+    return new Intl.NumberFormat('es-CO', {
+      style: 'currency',
+      currency: 'COP',
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0,
+    }).format(roundedValue);
+  };
+
   // Calcular subtotal real sumando los consumos individuales
   const subtotalConsumos = payroll.consumos.reduce((sum, consumo) => sum + consumo.valor, 0);
   const descuentoConsumos = subtotalConsumos * 0.15;
@@ -211,7 +222,7 @@ export function PayrollDetailsModal({ isOpen, onClose, payroll }: PayrollDetails
                 <div className="flex justify-between">
                   <span className="text-sm font-medium text-gray-900">Salario neto:</span>
                   <span className="text-lg font-bold text-gray-900">
-                    {formatCurrency(salarioNetoCalculado)}
+                    {formatTotal(salarioNetoCalculado)}
                   </span>
                 </div>
               </div>

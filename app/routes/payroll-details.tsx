@@ -1,5 +1,5 @@
 import { useState, useEffect, type ChangeEvent } from 'react';
-import { Plus, Search, Edit, Trash2, Calendar, Clock, DollarSign, Banknote, ChevronDown, ChevronRight, Eye } from 'lucide-react';
+import { Plus, Search, Edit, Trash2, Calendar, ChevronDown, ChevronRight, Eye } from 'lucide-react';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { Select } from '../components/ui/select';
