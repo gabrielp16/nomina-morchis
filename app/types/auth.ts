@@ -65,6 +65,7 @@ export interface Payroll {
   salarioNeto: number;
   procesadoPor: User;
   estado: 'PENDIENTE' | 'PROCESADA' | 'PAGADA';
+  fechaPago?: Date;
   observaciones?: string;
   createdAt: Date;
   updatedAt: Date;

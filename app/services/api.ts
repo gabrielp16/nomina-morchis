@@ -436,6 +436,12 @@ export const payrollService = {
     });
   },
 
+  pay: (id: string) => {
+    return fetchApi<Payroll>(`/payroll/${id}/pay`, {
+      method: 'PATCH',
+    });
+  },
+
   getStats: () => {
     return fetchApi<{
       totalNominas: number;

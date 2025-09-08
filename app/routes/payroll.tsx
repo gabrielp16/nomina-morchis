@@ -1,5 +1,5 @@
 import { useState, useEffect, type ChangeEvent } from 'react';
-import { Plus, Search, Edit, Trash2, Calendar, ChevronDown, ChevronRight, Eye } from 'lucide-react';
+import { Plus, Search, Edit, Trash2, Calendar, ChevronDown, ChevronRight, Eye, DollarSign } from 'lucide-react';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { Select } from '../components/ui/select';
@@ -154,6 +154,40 @@ export default function PayrollPage() {
     const payroll = payrolls.find(p => p.id === payrollId);
     if (payroll) {
       handleViewDetails(payroll);
+    }
+  };
+
+  const handlePayById = async (payrollId: string) => {
+    const payroll = payrolls.find(p => p.id === payrollId);
+    if (payroll) {
+      await handlePay(payroll);
+    }
+  };
+
+  const handlePay = async (payroll: Payroll) => {
+    if (payroll.estado !== 'PROCESADA') {
+      showError('Solo se pueden pagar nóminas en estado PROCESADA');
+      return;
+    }
+
+    const confirmed = await confirm({
+      title: 'Confirmar Pago',
+      message: `¿Estás seguro de que deseas marcar como pagada la nómina de ${payroll.employee?.user?.nombre} ${payroll.employee?.user?.apellido} del ${formatDate(payroll.fecha)}?`,
+      confirmText: 'Sí, pagar',
+      cancelText: 'Cancelar'
+    });
+
+    if (!confirmed) return;
+
+    try {
+      const response = await payrollService.pay(payroll.id);
+      if (response.success) {
+        success(`Nómina marcada como pagada exitosamente`);
+        loadPayrolls();
+      }
+    } catch (error) {
+      console.error('Error paying payroll:', error);
+      showError('Error al marcar la nómina como pagada');
     }
   };
 
@@ -774,6 +808,15 @@ export default function PayrollPage() {
                                                       >
                                                         <Edit className="h-4 w-4" />
                                                       </button>
+                                                      {hasPermission('PAY_PAYROLL') && payroll.estado === 'PROCESADA' && (
+                                                        <button
+                                                          onClick={() => handlePayById(payroll.id)}
+                                                          className="text-green-600 hover:text-green-800 transition-colors cursor-pointer"
+                                                          title="Pagar nómina"
+                                                        >
+                                                          <DollarSign className="h-4 w-4" />
+                                                        </button>
+                                                      )}
                                                       <button
                                                         onClick={() => handleDeleteById(payroll.id)}
                                                         className="text-red-600 hover:text-red-800 transition-colors cursor-pointer"
@@ -869,6 +912,15 @@ export default function PayrollPage() {
                                                 >
                                                   <Edit className="h-4 w-4" />
                                                 </button>
+                                                {hasPermission('PAY_PAYROLL') && payroll.estado === 'PROCESADA' && (
+                                                  <button
+                                                    onClick={() => handlePayById(payroll.id)}
+                                                    className="text-green-600 hover:text-green-800 transition-colors cursor-pointer"
+                                                    title="Pagar nómina"
+                                                  >
+                                                    <DollarSign className="h-4 w-4" />
+                                                  </button>
+                                                )}
                                                 <button
                                                   onClick={() => handleDeleteById(payroll.id)}
                                                   className="text-red-600 hover:text-red-800 transition-colors cursor-pointer"
