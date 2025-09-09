@@ -186,9 +186,9 @@ export function EditPayrollModal({
         horaInicio: data.horaInicio,
         horaFin: data.horaFin,
         consumos: data.consumos,
-        deudaMorchis: data.deudaMorchis,
-        adelantoNomina: data.adelantoNomina,
-        descuadre: data.descuadre,
+        deudaMorchis: data.deudaMorchis || 0,
+        adelantoNomina: data.adelantoNomina || 0,
+        descuadre: data.descuadre || 0,
         estado: data.estado,
         observaciones: data.observaciones
       });
@@ -359,7 +359,6 @@ export function EditPayrollModal({
                   step="50"
                   min="0"
                   {...register('deudaMorchis', { valueAsNumber: true })}
-                  placeholder="0"
                   disabled={isLoading}
                 />
                 {errors.deudaMorchis && (

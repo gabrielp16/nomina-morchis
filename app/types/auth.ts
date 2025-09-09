@@ -120,6 +120,15 @@ export interface PaginatedResponse<T> {
   };
 }
 
+// Para endpoints que no usan el objeto pagination anidado
+export interface SimplePaginatedResponse<T> {
+  data: T[];
+  total: number;
+  page: number;
+  limit: number;
+  totalPages: number;
+}
+
 // Formularios
 export interface UserFormData {
   nombre: string;

@@ -10,7 +10,7 @@ import { ConfirmDialog } from '../components/ui/ConfirmDialog';
 import { useConfirm } from '../hooks/useConfirm';
 import { useToast } from '../context/ToastContext';
 import { userService } from '../services/api';
-import type { User, PaginatedResponse } from '../types/auth';
+import type { User } from '../types/auth';
 
 export default function UsersPage() {
   const [users, setUsers] = useState<User[]>([]);
@@ -34,7 +34,7 @@ export default function UsersPage() {
       const response = await userService.getAll(currentPage, 10, search);
       if (response.success && response.data) {
         setUsers(response.data.data || []);
-        setTotalPages(response.data.pagination?.totalPages || 1);
+        setTotalPages(response.data.totalPages || 1);
       } else {
         showError(response.error || 'Error al cargar los usuarios');
         setUsers([]);

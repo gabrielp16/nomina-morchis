@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react';
-import { User, Mail, Phone, Calendar, Edit, Save, X } from 'lucide-react';
+import { User, Mail, Phone, Calendar, Edit, Save, X, Lock } from 'lucide-react';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { ProtectedRoute } from '../components/auth/ProtectedRoute';
+import { ChangePasswordModal } from '../components/auth/ChangePasswordModal';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
 import { userService } from '../services/api';
@@ -14,6 +15,7 @@ export default function ProfilePage() {
   const [profileData, setProfileData] = useState<UserType | null>(null);
   const [isEditing, setIsEditing] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [showChangePasswordModal, setShowChangePasswordModal] = useState(false);
   const [formData, setFormData] = useState({
     nombre: '',
     apellido: '',
@@ -138,14 +140,25 @@ export default function ProfilePage() {
               </div>
               <div className="mt-4 flex space-x-3 md:mt-0 md:ml-4">
                 {!isEditing ? (
-                  <Button
-                    onClick={handleEdit}
-                    className="inline-flex items-center"
-                    disabled={isLoading}
-                  >
-                    <Edit className="h-4 w-4 mr-2" />
-                    Editar Perfil
-                  </Button>
+                  <>
+                    <Button
+                      onClick={handleEdit}
+                      className="inline-flex items-center"
+                      disabled={isLoading}
+                    >
+                      <Edit className="h-4 w-4 mr-2" />
+                      Editar Perfil
+                    </Button>
+                    <Button
+                      variant="outline"
+                      onClick={() => setShowChangePasswordModal(true)}
+                      className="inline-flex items-center"
+                      disabled={isLoading}
+                    >
+                      <Lock className="h-4 w-4 mr-2" />
+                      Cambiar Contraseña
+                    </Button>
+                  </>
                 ) : (
                   <div className="flex space-x-2">
                     <Button
@@ -358,6 +371,12 @@ export default function ProfilePage() {
             </div>
           </div>
         </div>
+
+        {/* Modal de cambio de contraseña */}
+        <ChangePasswordModal
+          isOpen={showChangePasswordModal}
+          onClose={() => setShowChangePasswordModal(false)}
+        />
       </div>
     </ProtectedRoute>
   );

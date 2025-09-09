@@ -11,7 +11,7 @@ import { ConfirmDialog } from '../components/ui/ConfirmDialog';
 import { useConfirm } from '../hooks/useConfirm';
 import { roleService } from '../services/api';
 import { useToast } from '../context/ToastContext';
-import type { Role, PaginatedResponse } from '../types/auth';
+import type { Role } from '../types/auth';
 
 export default function RolesPage() {
   const { hasPermission } = useAuth();
@@ -36,9 +36,9 @@ export default function RolesPage() {
       const response = await roleService.getAll(currentPage, 10, search);
       if (response.success && response.data) {
         setRoles(response.data.data);
-        setTotalPages(response.data.pagination.totalPages);
+        setTotalPages(response.data.totalPages);
       } else {
-        showError(response.error || 'Error al caargar los roles');
+        showError(response.error || 'Error al cargar los roles');
       }
     } catch (error) {
       console.error('Error loading roles:', error);

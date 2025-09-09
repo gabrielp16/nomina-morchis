@@ -10,7 +10,7 @@ import { EditPermissionModal } from '../components/permissions/EditPermissionMod
 import { useConfirm } from '../hooks/useConfirm';
 import { useToast } from '../context/ToastContext';
 import { permissionService } from '../services/api';
-import type { Permission, PaginatedResponse } from '../types/auth';
+import type { Permission, SimplePaginatedResponse } from '../types/auth';
 
 export default function PermissionsPage() {
   const [permissions, setPermissions] = useState<Permission[]>([]);
@@ -35,7 +35,7 @@ export default function PermissionsPage() {
       const response = await permissionService.getAll(currentPage, 10, search);
       if (response.success && response.data) {
         setPermissions(response.data.data);
-        setTotalPages(response.data.pagination.totalPages);
+        setTotalPages(response.data.totalPages);
       } else {
         showError(response.error || 'Error al cargar los permisos');
       }

@@ -1,4 +1,4 @@
-import type { User, Role, Permission, ActivityLog, ApiResponse, PaginatedResponse, UserFormData, CreateUserFormData, RoleFormData, PermissionFormData, DashboardStats, RecentActivity, Employee, Payroll } from '../types/auth';
+import type { User, Role, Permission, ActivityLog, ApiResponse, PaginatedResponse, SimplePaginatedResponse, UserFormData, CreateUserFormData, RoleFormData, PermissionFormData, DashboardStats, RecentActivity, Employee, Payroll } from '../types/auth';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3001/api';
 
@@ -135,18 +135,30 @@ export const authService = {
       method: 'POST',
     });
   },
+
+  // Cambiar contraseña
+  changePassword: async (passwordData: {
+    currentPassword: string;
+    newPassword: string;
+    confirmPassword: string;
+  }): Promise<ApiResponse<null>> => {
+    return fetchApi<null>('/auth/change-password', {
+      method: 'PUT',
+      body: JSON.stringify(passwordData),
+    });
+  },
 };
 
 // CRUD Usuarios
 export const userService = {
-  getAll: async (page = 1, limit = 10, search?: string): Promise<ApiResponse<PaginatedResponse<User>>> => {
+  getAll: async (page = 1, limit = 10, search?: string): Promise<ApiResponse<SimplePaginatedResponse<User>>> => {
     const params = new URLSearchParams({
       page: page.toString(),
       limit: limit.toString(),
       ...(search && { search }),
     });
     
-    return fetchApi<PaginatedResponse<User>>(`/users?${params}`);
+    return fetchApi<SimplePaginatedResponse<User>>(`/users?${params}`);
   },
 
   getById: async (id: string): Promise<ApiResponse<User>> => {
@@ -199,14 +211,14 @@ export const userService = {
 
 // CRUD Roles
 export const roleService = {
-  getAll: async (page = 1, limit = 10, search?: string): Promise<ApiResponse<PaginatedResponse<Role>>> => {
+  getAll: async (page = 1, limit = 10, search?: string): Promise<ApiResponse<SimplePaginatedResponse<Role>>> => {
     const params = new URLSearchParams({
       page: page.toString(),
       limit: limit.toString(),
       ...(search && { search }),
     });
     
-    return fetchApi<PaginatedResponse<Role>>(`/roles?${params}`);
+    return fetchApi<SimplePaginatedResponse<Role>>(`/roles?${params}`);
   },
 
   getById: async (id: string): Promise<ApiResponse<Role>> => {
@@ -248,14 +260,14 @@ export const roleService = {
 
 // CRUD Permisos
 export const permissionService = {
-  getAll: async (page = 1, limit = 10, search?: string): Promise<ApiResponse<PaginatedResponse<Permission>>> => {
+  getAll: async (page = 1, limit = 10, search?: string): Promise<ApiResponse<SimplePaginatedResponse<Permission>>> => {
     const params = new URLSearchParams({
       page: page.toString(),
       limit: limit.toString(),
       ...(search && { search }),
     });
     
-    return fetchApi<PaginatedResponse<Permission>>(`/permissions?${params}`);
+    return fetchApi<SimplePaginatedResponse<Permission>>(`/permissions?${params}`);
   },
 
   getById: async (id: string): Promise<ApiResponse<Permission>> => {
