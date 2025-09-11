@@ -10,7 +10,7 @@ import { EditPermissionModal } from '../components/permissions/EditPermissionMod
 import { useConfirm } from '../hooks/useConfirm';
 import { useToast } from '../context/ToastContext';
 import { permissionService } from '../services/api';
-import type { Permission, SimplePaginatedResponse } from '../types/auth';
+import type { Permission } from '../types/auth';
 
 export default function PermissionsPage() {
   const [permissions, setPermissions] = useState<Permission[]>([]);
