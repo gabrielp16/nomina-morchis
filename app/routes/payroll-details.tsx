@@ -1,5 +1,5 @@
 import { useState, useEffect, type ChangeEvent } from 'react';
-import { Plus, Search, Edit, Trash2, Calendar, ChevronDown, ChevronRight, Eye } from 'lucide-react';
+import { Plus, Search, Edit, Trash2, Calendar, ChevronDown, ChevronRight, Eye, DollarSign } from 'lucide-react';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { Select } from '../components/ui/select';
@@ -463,8 +463,8 @@ export default function PayrollDetailsPage() {
                 </p>
               </div>
               
-              {hasPermission("CREATE_PAYROLL") && (
-                <div className="mt-4 md:mt-0 md:ml-4 flex space-x-3">
+              <div className="mt-4 md:mt-0 md:ml-4 flex space-x-3">
+                {hasPermission("CREATE_PAYROLL") && (
                   <Button
                     onClick={() => setShowCreateModal(true)}
                     className="bg-blue-600 hover:bg-blue-700 text-white flex items-center space-x-2"
@@ -472,8 +472,18 @@ export default function PayrollDetailsPage() {
                     <Plus className="h-4 w-4" />
                     <span>{isAdmin ? 'Agregar Registro' : 'Agregar Mi Registro'}</span>
                   </Button>
-                </div>
-              )}
+                )}
+                
+                {isAdmin && hasPermission("PAY_PAYROLL") && (
+                  <Button
+                    onClick={() => setShowPaymentModal(true)}
+                    className="bg-green-600 hover:bg-green-700 text-white flex items-center space-x-2"
+                  >
+                    <DollarSign className="h-4 w-4" />
+                    <span>Pagar Nóminas</span>
+                  </Button>
+                )}
+              </div>
             </div>
 
             {/* Filters */}
@@ -960,6 +970,7 @@ export default function PayrollDetailsPage() {
         <PayrollPaymentModal
           isOpen={showPaymentModal}
           onClose={() => setShowPaymentModal(false)}
+          onSuccess={handleModalSuccess}
         />
       )}
 

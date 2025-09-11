@@ -507,7 +507,7 @@ export function CreatePayrollModal({
                       <div className="flex-1">
                         <Input
                           type="number"
-                          step="100"
+                          step="50"
                           min="0"
                           {...register(`consumos.${index}.valor`, { valueAsNumber: true })}
                           placeholder="Valor"

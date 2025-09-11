@@ -9,6 +9,7 @@ import type { Payroll, Employee } from '../../types/auth';
 interface PayrollPaymentModalProps {
   isOpen: boolean;
   onClose: () => void;
+  onSuccess?: () => void;
 }
 
 interface PayrollsByEmployee {
@@ -27,7 +28,7 @@ interface MonthlyData {
   totalMensual: number;
 }
 
-export function PayrollPaymentModal({ isOpen, onClose }: PayrollPaymentModalProps) {
+export function PayrollPaymentModal({ isOpen, onClose, onSuccess }: PayrollPaymentModalProps) {
   const [loading, setLoading] = useState(false);
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [selectedEmployee, setSelectedEmployee] = useState<string>('');
@@ -54,6 +55,8 @@ export function PayrollPaymentModal({ isOpen, onClose }: PayrollPaymentModalProp
       success(`Nómina de ${quincenaType} quincena confirmada exitosamente`);
       // Recargar datos para reflejar los cambios
       loadPayrollData();
+      // Notificar al componente padre para que actualice sus datos
+      onSuccess?.();
     } catch (error) {
       console.error('Error confirming payroll:', error);
       showError('Error al confirmar nómina');
