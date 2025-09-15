@@ -111,7 +111,7 @@ export function PayrollPaymentModal({ isOpen, onClose, onSuccess }: PayrollPayme
         adelantos: acc.adelantos + payroll.adelantoNomina,
         descuadres: acc.descuadres + (payroll.descuadre || 0),
         deudas: acc.deudas + payroll.deudaMorchis,
-        salarioNeto: acc.salarioNeto + (payroll.salarioBruto - totalConsumos - payroll.adelantoNomina - (payroll.descuadre || 0) + payroll.deudaMorchis)
+        salarioNeto: acc.salarioNeto + roundUpToFifty(payroll.salarioBruto - totalConsumos - payroll.adelantoNomina - (payroll.descuadre || 0) + payroll.deudaMorchis)
       };
     }, {
       totalMinutos: 0,
@@ -291,12 +291,12 @@ export function PayrollPaymentModal({ isOpen, onClose, onSuccess }: PayrollPayme
     });
 
     const calculateTotal = (payrollList: Payroll[]) => {
-      return payrollList.reduce((sum, payroll) => {
+      return roundUpToFifty(payrollList.reduce((sum, payroll) => {
         const subtotalConsumos = payroll.consumos.reduce((s, c) => s + c.valor, 0);
         const descuentoConsumos = subtotalConsumos * 0.15;
         const totalConsumos = subtotalConsumos - descuentoConsumos;
         return sum + (payroll.salarioBruto - totalConsumos - payroll.adelantoNomina - (payroll.descuadre || 0) + payroll.deudaMorchis);
-      }, 0);
+      }, 0));
     };
 
     const primeraQuincenaTotal = calculateTotal(primeraQuincenaPayrolls);
@@ -311,7 +311,7 @@ export function PayrollPaymentModal({ isOpen, onClose, onSuccess }: PayrollPayme
         payrolls: segundaQuincenaPayrolls,
         total: segundaQuincenaTotal
       },
-      totalMensual: primeraQuincenaTotal + segundaQuincenaTotal
+      totalMensual: roundUpToFifty(primeraQuincenaTotal) + roundUpToFifty(segundaQuincenaTotal)
     });
   };
 
@@ -321,6 +321,11 @@ export function PayrollPaymentModal({ isOpen, onClose, onSuccess }: PayrollPayme
       currency: 'COP',
       minimumFractionDigits: 0,
     }).format(value);
+  };
+
+  // Función para redondear hacia arriba a la quinta decena (50)
+  const roundUpToFifty = (value: number) => {
+    return Math.ceil(value / 50) * 50;
   };
 
   const formatTime = (time: string) => {
@@ -349,7 +354,8 @@ export function PayrollPaymentModal({ isOpen, onClose, onSuccess }: PayrollPayme
     const subtotalConsumos = payroll.consumos.reduce((sum, consumo) => sum + consumo.valor, 0);
     const descuentoConsumos = subtotalConsumos * 0.15;
     const totalConsumos = subtotalConsumos - descuentoConsumos;
-    return payroll.salarioBruto - totalConsumos - payroll.adelantoNomina - (payroll.descuadre || 0) + payroll.deudaMorchis;
+    const salarioNeto = payroll.salarioBruto - totalConsumos - payroll.adelantoNomina - (payroll.descuadre || 0) + payroll.deudaMorchis;
+    return roundUpToFifty(salarioNeto);
   };
 
   const getMonthName = (month: string) => {
@@ -403,7 +409,7 @@ export function PayrollPaymentModal({ isOpen, onClose, onSuccess }: PayrollPayme
         adelantos: acc.adelantos + payroll.adelantoNomina,
         descuadres: acc.descuadres + (payroll.descuadre || 0),
         deudas: acc.deudas + payroll.deudaMorchis,
-        salarioNeto: acc.salarioNeto + (payroll.salarioBruto - totalConsumos - payroll.adelantoNomina - (payroll.descuadre || 0) + payroll.deudaMorchis)
+        salarioNeto: acc.salarioNeto + roundUpToFifty(payroll.salarioBruto - totalConsumos - payroll.adelantoNomina - (payroll.descuadre || 0) + payroll.deudaMorchis)
       };
     }, {
       totalMinutos: 0,
