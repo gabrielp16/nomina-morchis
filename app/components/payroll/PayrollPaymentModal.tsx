@@ -331,34 +331,88 @@ export function PayrollPaymentModal({ isOpen, onClose, onSuccess }: PayrollPayme
       // Preparar elemento con estilos inline
       const preparedElement = prepareElementForCapture(elementRef.current);
       
-      // Crear un contenedor temporal
+      // Crear un contenedor temporal completamente aislado
       const tempContainer = document.createElement('div');
-      tempContainer.style.position = 'absolute';
-      tempContainer.style.left = '-9999px';
-      tempContainer.style.top = '-9999px';
-      tempContainer.appendChild(preparedElement);
+      tempContainer.style.cssText = `
+        position: fixed !important;
+        left: -99999px !important;
+        top: -99999px !important;
+        width: auto !important;
+        height: auto !important;
+        overflow: visible !important;
+        z-index: -9999 !important;
+        opacity: 0 !important;
+        pointer-events: none !important;
+      `;
+      
+      // Crear un iframe aislado para evitar herencia de estilos CSS
+      const iframe = document.createElement('iframe');
+      iframe.style.cssText = `
+        width: 1200px !important;
+        height: 800px !important;
+        border: none !important;
+        background: transparent !important;
+      `;
+      
+      tempContainer.appendChild(iframe);
       document.body.appendChild(tempContainer);
       
-      // Configuración optimizada para captura de alta calidad
-      const canvas = await html2canvas(preparedElement, {
+      // Esperar a que el iframe cargue
+      await new Promise<void>((resolve) => {
+        iframe.onload = () => resolve();
+        // Fallback timeout
+        setTimeout(resolve, 100);
+      });
+      
+      const iframeDoc = iframe.contentDocument || iframe.contentWindow?.document;
+      if (!iframeDoc) {
+        throw new Error('No se pudo acceder al documento del iframe');
+      }
+      
+      // Limpiar el documento del iframe y agregar solo nuestro contenido estilizado
+      iframeDoc.open();
+      iframeDoc.write(`
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <meta charset="utf-8">
+          <style>
+            * {
+              margin: 0;
+              padding: 0;
+              box-sizing: border-box;
+              font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif !important;
+            }
+            body {
+              background: #f8fafc;
+              margin: 0;
+              padding: 0;
+            }
+          </style>
+        </head>
+        <body></body>
+        </html>
+      `);
+      iframeDoc.close();
+      
+      // Agregar nuestro elemento preparado al iframe
+      iframeDoc.body.appendChild(preparedElement);
+      
+      // Configuración ultra segura para html2canvas
+      const canvas = await html2canvas(iframeDoc.body, {
         backgroundColor: '#f8fafc',
-        scale: 2, // Alta resolución
+        scale: 2,
         logging: false,
         allowTaint: false,
         useCORS: false,
         foreignObjectRendering: false,
         removeContainer: false,
-        width: preparedElement.scrollWidth,
-        height: preparedElement.scrollHeight,
-        // Evitar cualquier análisis automático de colores
-        ignoreElements: (element) => {
-          const computedStyle = window.getComputedStyle(element);
-          const hasProblematicColor = computedStyle.color?.includes('oklch') || 
-                                    computedStyle.backgroundColor?.includes('oklch') ||
-                                    element.tagName === 'STYLE' ||
-                                    element.tagName === 'SCRIPT';
-          return hasProblematicColor;
-        }
+        width: 1200,
+        height: 800,
+        windowWidth: 1200,
+        windowHeight: 800,
+        // No ignorar elementos - todos deberían estar limpios
+        ignoreElements: () => false
       });
 
       // Limpiar contenedor temporal
