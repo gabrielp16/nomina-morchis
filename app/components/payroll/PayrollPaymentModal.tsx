@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react';
-import { X, Calendar, Clock, DollarSign, User, CheckCircle, Download } from 'lucide-react';
+import { useState, useEffect, useRef } from 'react';
+import { X, Calendar, DollarSign, User, CheckCircle, Share } from 'lucide-react';
 import { Button } from '../ui/button';
 import { Select } from '../ui/select';
 import { payrollService, employeeService } from '../../services/api';
@@ -10,11 +10,6 @@ interface PayrollPaymentModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSuccess?: () => void;
-}
-
-interface PayrollsByEmployee {
-  employee: Employee;
-  payrolls: Payroll[];
 }
 
 interface QuincenaData {
@@ -35,6 +30,8 @@ export function PayrollPaymentModal({ isOpen, onClose, onSuccess }: PayrollPayme
   const [selectedMonth, setSelectedMonth] = useState<string>('');
   const [selectedYear, setSelectedYear] = useState<string>('');
   const [monthlyData, setMonthlyData] = useState<MonthlyData | null>(null);
+  const primeraQuincenaRef = useRef<HTMLDivElement>(null);
+  const segundaQuincenaRef = useRef<HTMLDivElement>(null);
   const { error: showError, success } = useToast();
 
   const handleConfirmarNomina = async (quincenaType: 'primera' | 'segunda') => {
@@ -63,151 +60,488 @@ export function PayrollPaymentModal({ isOpen, onClose, onSuccess }: PayrollPayme
     }
   };
 
-  const handleExportarPDF = (quincenaType: 'primera' | 'segunda') => {
+  const handleCaptureAndShare = async (quincenaType: 'primera' | 'segunda') => {
     if (!selectedEmployee || !monthlyData) return;
 
     const employee = employees.find(e => e.id === selectedEmployee);
-    const quincenaData = quincenaType === 'primera' 
-      ? monthlyData.primeraQuincena 
-      : monthlyData.segundaQuincena;
+    const elementRef = quincenaType === 'primera' ? primeraQuincenaRef : segundaQuincenaRef;
+    
+    if (!elementRef.current || !employee) {
+      showError('Error al preparar la captura');
+      return;
+    }
 
-    // Crear contenido HTML para el PDF
-    const htmlContent = generatePDFContent(
-      employee, 
-      quincenaData, 
-      `${quincenaType === 'primera' ? 'Primera' : 'Segunda'} Quincena`,
-      selectedMonth,
-      selectedYear
-    );
+    // Función para crear una versión estilizada para captura
+    const prepareElementForCapture = (element: HTMLElement) => {
+      // Crear un contenedor principal con estilos mejorados
+      const captureContainer = document.createElement('div');
+      captureContainer.style.cssText = `
+        background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+        padding: 30px;
+        font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+        border-radius: 16px;
+        box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+        min-width: 800px;
+        max-width: 1200px;
+      `;
 
-    // Abrir ventana de impresión con el contenido
-    const printWindow = window.open('', '_blank');
-    if (printWindow) {
-      printWindow.document.write(htmlContent);
-      printWindow.document.close();
-      printWindow.print();
+      // Header de la captura con información del empleado
+      const header = document.createElement('div');
+      header.style.cssText = `
+        background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+        color: white;
+        padding: 20px 30px;
+        border-radius: 12px;
+        margin-bottom: 24px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        box-shadow: 0 10px 15px -3px rgba(16, 185, 129, 0.3);
+      `;
+
+      const employeeName = `${employee.user?.nombre || ''} ${employee.user?.apellido || ''}`.trim();
+      const quincenaTitle = quincenaType === 'primera' ? 'Primera' : 'Segunda';
+      
+      header.innerHTML = `
+        <div>
+          <h2 style="margin: 0; font-size: 24px; font-weight: 700; margin-bottom: 4px;">
+            Nómina ${quincenaTitle} Quincena
+          </h2>
+          <p style="margin: 0; font-size: 16px; opacity: 0.9;">
+            ${employeeName} • ${getMonthName(selectedMonth)} ${selectedYear}
+          </p>
+        </div>
+        <div style="text-align: right;">
+          <div style="font-size: 14px; opacity: 0.8; margin-bottom: 4px;">Total a Pagar</div>
+          <div style="font-size: 28px; font-weight: 800;">
+            ${formatCurrency((quincenaType === 'primera' ? monthlyData?.primeraQuincena.total : monthlyData?.segundaQuincena.total) || 0)}
+          </div>
+        </div>
+      `;
+
+      captureContainer.appendChild(header);
+
+      // Clonar y estilizar la tabla
+      const clone = element.cloneNode(true) as HTMLElement;
+      
+      // Crear contenedor para la tabla con estilos mejorados
+      const tableContainer = document.createElement('div');
+      tableContainer.style.cssText = `
+        background: white;
+        border-radius: 12px;
+        overflow: hidden;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        border: 1px solid #e5e7eb;
+      `;
+
+      // Aplicar estilos mejorados a la tabla
+      const applyEnhancedStyles = (el: HTMLElement) => {
+        const allElements = [el, ...Array.from(el.querySelectorAll('*'))] as HTMLElement[];
+        
+        allElements.forEach(element => {
+          // Estilos base
+          element.style.fontFamily = 'Inter, -apple-system, BlinkMacSystemFont, sans-serif';
+          
+          // Estilos específicos por elemento
+          if (element.tagName === 'TABLE') {
+            element.style.cssText = `
+              width: 100%;
+              border-collapse: separate;
+              border-spacing: 0;
+              background: white;
+            `;
+          }
+          
+          if (element.tagName === 'THEAD') {
+            element.style.cssText = `
+              background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+            `;
+          }
+          
+          if (element.tagName === 'TH') {
+            element.style.cssText = `
+              padding: 16px 12px;
+              text-align: left;
+              font-size: 12px;
+              font-weight: 600;
+              color: #374151;
+              text-transform: uppercase;
+              letter-spacing: 0.05em;
+              border-bottom: 2px solid #e5e7eb;
+              background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+            `;
+            
+            // Alineación especial para columnas monetarias
+            if (element.textContent?.includes('Valor') || 
+                element.textContent?.includes('Consumos') || 
+                element.textContent?.includes('Adelantos') ||
+                element.textContent?.includes('Descuadre') ||
+                element.textContent?.includes('Deudas') ||
+                element.textContent?.includes('Salario')) {
+              element.style.textAlign = 'right';
+            }
+          }
+          
+          if (element.tagName === 'TBODY') {
+            element.style.background = 'white';
+          }
+          
+          if (element.tagName === 'TR' && element.closest('tbody')) {
+            element.style.cssText = `
+              border-bottom: 1px solid #f3f4f6;
+              transition: background-color 0.15s ease;
+            `;
+            
+            // Alternar colores de filas
+            const rowIndex = Array.from(element.parentNode!.children).indexOf(element);
+            if (rowIndex % 2 === 1) {
+              element.style.backgroundColor = '#fafafa';
+            }
+          }
+          
+          if (element.tagName === 'TD') {
+            element.style.cssText = `
+              padding: 12px;
+              font-size: 13px;
+              color: #111827;
+              vertical-align: middle;
+              border-bottom: 1px solid #f3f4f6;
+            `;
+            
+            // Estilos especiales para diferentes tipos de columnas
+            const textContent = element.textContent || '';
+            
+            // Valores monetarios
+            if (textContent.includes('$') || textContent.includes('COP')) {
+              element.style.fontWeight = '600';
+              element.style.textAlign = 'right';
+              element.style.fontFeatureSettings = '"tnum"';
+              
+              // Colores específicos para valores
+              if (textContent.includes('-') || element.classList.contains('text-red-600')) {
+                element.style.color = '#dc2626';
+              } else if (element.classList.contains('text-green-600') || 
+                        element.parentElement?.querySelector('th')?.textContent?.includes('Valor horas') ||
+                        element.parentElement?.querySelector('th')?.textContent?.includes('Deudas')) {
+                element.style.color = '#059669';
+              }
+            }
+            
+            // Día de la semana
+            if (
+              element.tagName === 'TD' &&
+              (element as HTMLTableCellElement).cellIndex === 0
+            ) {
+              element.style.fontWeight = '600';
+              element.style.color = '#374151';
+            }
+            
+            // Horas trabajadas
+            if (textContent.includes('h') && textContent.includes('m')) {
+              element.style.fontWeight = '500';
+              element.style.color = '#6b7280';
+            }
+          }
+          
+          if (element.tagName === 'TFOOT') {
+            element.style.cssText = `
+              background: linear-gradient(135deg, #f3f4f6 0%, #e5e7eb 100%);
+              border-top: 2px solid #d1d5db;
+            `;
+          }
+          
+          if (element.tagName === 'TD' && element.closest('tfoot')) {
+            element.style.cssText = `
+              padding: 16px 12px;
+              font-size: 14px;
+              font-weight: 700;
+              color: #111827;
+              border-top: 2px solid #d1d5db;
+              background: linear-gradient(135deg, #f3f4f6 0%, #e5e7eb 100%);
+            `;
+            
+            const textContent = element.textContent || '';
+            if (textContent.includes('$')) {
+              element.style.textAlign = 'right';
+              element.style.fontFeatureSettings = '"tnum"';
+              
+              if (textContent.includes('-')) {
+                element.style.color = '#dc2626';
+              } else if (element.classList.contains('text-green-600')) {
+                element.style.color = '#059669';
+              }
+            }
+          }
+        });
+      };
+
+      applyEnhancedStyles(clone);
+      
+      // Remover elementos innecesarios para la captura (botones, etc.)
+      const buttonsToRemove = clone.querySelectorAll('button, .ignore-screenshot');
+      buttonsToRemove.forEach(btn => btn.remove());
+      
+      // Remover la parte del header con botones
+      const headerWithButtons = clone.querySelector('.flex.items-center.justify-between.mb-4');
+      if (headerWithButtons) {
+        headerWithButtons.remove();
+      }
+
+      tableContainer.appendChild(clone);
+      captureContainer.appendChild(tableContainer);
+
+      // Footer con información adicional
+      const footer = document.createElement('div');
+      footer.style.cssText = `
+        margin-top: 20px;
+        padding: 16px 24px;
+        background: rgba(255, 255, 255, 0.8);
+        border-radius: 8px;
+        border: 1px solid #e5e7eb;
+        display: flex;
+        justify-content: between;
+        align-items: center;
+        font-size: 12px;
+        color: #6b7280;
+      `;
+
+      const currentDate = new Date().toLocaleDateString('es-CO', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+      });
+
+      footer.innerHTML = `
+        <div>
+          <strong>Sistema de Nómina Morchis</strong> • Generado el ${currentDate}
+        </div>
+      `;
+
+      captureContainer.appendChild(footer);
+      
+      return captureContainer;
+    };
+
+    try {
+      // Dinamically import html2canvas
+      const html2canvas = (await import('html2canvas')).default;
+      
+      // Preparar elemento con estilos inline
+      const preparedElement = prepareElementForCapture(elementRef.current);
+      
+      // Crear un contenedor temporal
+      const tempContainer = document.createElement('div');
+      tempContainer.style.position = 'absolute';
+      tempContainer.style.left = '-9999px';
+      tempContainer.style.top = '-9999px';
+      tempContainer.appendChild(preparedElement);
+      document.body.appendChild(tempContainer);
+      
+      // Configuración optimizada para captura de alta calidad
+      const canvas = await html2canvas(preparedElement, {
+        backgroundColor: '#f8fafc',
+        scale: 2, // Alta resolución
+        logging: false,
+        allowTaint: false,
+        useCORS: false,
+        foreignObjectRendering: false,
+        removeContainer: false,
+        width: preparedElement.scrollWidth,
+        height: preparedElement.scrollHeight,
+        // Evitar cualquier análisis automático de colores
+        ignoreElements: (element) => {
+          const computedStyle = window.getComputedStyle(element);
+          const hasProblematicColor = computedStyle.color?.includes('oklch') || 
+                                    computedStyle.backgroundColor?.includes('oklch') ||
+                                    element.tagName === 'STYLE' ||
+                                    element.tagName === 'SCRIPT';
+          return hasProblematicColor;
+        }
+      });
+
+      // Limpiar contenedor temporal
+      document.body.removeChild(tempContainer);
+
+      // Convert to blob
+      canvas.toBlob(async (blob) => {
+        if (!blob) {
+          showError('Error al generar la imagen');
+          return;
+        }
+
+        const fileName = `nomina_${employee.user?.nombre}_${employee.user?.apellido}_${quincenaType}_${getMonthName(selectedMonth)}_${selectedYear}.png`;
+        
+        // Check if Web Share API is available
+        if (navigator.share) {
+          try {
+            const file = new File([blob], fileName, { type: 'image/png' });
+            await navigator.share({
+              title: `Nómina ${quincenaType === 'primera' ? 'Primera' : 'Segunda'} Quincena`,
+              text: `Nómina de ${employee.user?.nombre} ${employee.user?.apellido} - ${getMonthName(selectedMonth)} ${selectedYear}`,
+              files: [file]
+            });
+            success('Imagen compartida exitosamente');
+          } catch (error) {
+            console.error('Error sharing:', error);
+            // Fallback to download
+            downloadImage(blob, fileName);
+          }
+        } else {
+          // Show sharing options
+          showSharingOptions(blob, fileName, employee, quincenaType);
+        }
+      }, 'image/png');
+
+    } catch (error) {
+      console.error('Error capturing screenshot:', error);
+      
+      // Último fallback: captura con DOM-to-image si html2canvas falla completamente
+      try {
+        showError('Intentando método alternativo de captura...');
+        
+        // Fallback manual: crear canvas básico
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
+        
+        if (!ctx) {
+          throw new Error('No se pudo crear contexto de canvas');
+        }
+        
+        // Configurar dimensiones básicas
+        canvas.width = 800;
+        canvas.height = 600;
+        
+        // Fondo blanco
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        
+        // Texto de fallback
+        ctx.fillStyle = '#111827';
+        ctx.font = '16px Arial';
+        ctx.fillText('Error al capturar imagen automáticamente', 50, 50);
+        ctx.fillText('Por favor, tome una captura manual', 50, 80);
+        ctx.fillText(`Empleado: ${employee.user?.nombre} ${employee.user?.apellido}`, 50, 120);
+        ctx.fillText(`${quincenaType === 'primera' ? 'Primera' : 'Segunda'} Quincena - ${getMonthName(selectedMonth)} ${selectedYear}`, 50, 150);
+        
+        canvas.toBlob(async (blob) => {
+          if (!blob) {
+            showError('Error crítico al generar imagen de respaldo');
+            return;
+          }
+
+          const fileName = `nomina_fallback_${employee.user?.nombre}_${employee.user?.apellido}_${quincenaType}_${getMonthName(selectedMonth)}_${selectedYear}.png`;
+          downloadImage(blob, fileName);
+          showError('Se descargó una imagen de respaldo. Recomendamos tomar una captura manual.');
+        }, 'image/png');
+        
+      } catch (fallbackError) {
+        console.error('Error with manual fallback:', fallbackError);
+        showError('Error crítico al capturar imagen. Por favor, tome una captura de pantalla manual.');
+      }
     }
   };
 
-  const generatePDFContent = (
-    employee: Employee | undefined,
-    quincenaData: QuincenaData,
-    quincenaTitle: string,
-    month: string,
-    year: string
-  ) => {
-    if (!employee) return '';
+  const downloadImage = (blob: Blob, fileName: string) => {
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = fileName;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+    success('Imagen descargada exitosamente');
+  };
 
-    const totales = quincenaData.payrolls.reduce((acc, payroll) => {
-      const subtotalConsumos = payroll.consumos.reduce((sum, consumo) => sum + consumo.valor, 0);
-      const descuentoConsumos = subtotalConsumos * 0.15;
-      const totalConsumos = subtotalConsumos - descuentoConsumos;
-      const totalMinutos = (payroll.horasTrabajadas * 60) + payroll.minutosTrabajados;
-      
-      return {
-        totalMinutos: acc.totalMinutos + totalMinutos,
-        salarioBruto: acc.salarioBruto + payroll.salarioBruto,
-        totalConsumos: acc.totalConsumos + totalConsumos,
-        adelantos: acc.adelantos + payroll.adelantoNomina,
-        descuadres: acc.descuadres + (payroll.descuadre || 0),
-        deudas: acc.deudas + payroll.deudaMorchis,
-        salarioNeto: acc.salarioNeto + roundUpToFifty(payroll.salarioBruto - totalConsumos - payroll.adelantoNomina - (payroll.descuadre || 0) + payroll.deudaMorchis)
-      };
-    }, {
-      totalMinutos: 0,
-      salarioBruto: 0,
-      totalConsumos: 0,
-      adelantos: 0,
-      descuadres: 0,
-      deudas: 0,
-      salarioNeto: 0
-    });
-
-    const horasTotales = Math.floor(totales.totalMinutos / 60);
-    const minutosTotales = totales.totalMinutos % 60;
-
-    return `
-      <!DOCTYPE html>
-      <html>
-      <head>
-        <title>Nómina ${quincenaTitle} - ${employee.user?.nombre} ${employee.user?.apellido}</title>
-        <style>
-          body { font-family: Arial, sans-serif; margin: 10px; }
-          h1 { color: #333; text-align: center; margin: 10px; font-size: 1.5em; }
-          h2 { color: #666; margin: 0; text-align: center; font-size: 1.2em; font-weight: 100; }
-          table { width: 100%; border-collapse: collapse; margin: 20px auto; }
-          th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
-          th { background-color: #f5f5f5; }
-          .text-right { text-align: right; }
-          .text-left { text-align: left; }
-          .text-center { text-align: center; }
-          .green { color: #16a34a; }
-          .red { color: #dc2626; }
-          .periodo { color: #666; font-size: 1em; line-height: 1.5; padding: 4px; margin: 0; text-align: center; }
-          .totals { background-color: #f9f9f9; font-weight: bold; }
-          .data-field { font-size:12px; line-height: 1.5; padding: 4px;}
-          .header-field { font-size:12px; line-height: 1.5; padding: 4px; text-align: center;}
-          .footer-field { font-size:12px; line-height: 1.5; padding: 4px;}
-        </style>
-      </head>
-      <body>
-        <h1>Nómina ${quincenaTitle}</h1>
-        <h2>Empleado: ${employee.user?.nombre} ${employee.user?.apellido}</h2>
-        <p class="periodo">Período: ${getMonthName(month)} ${year}</p>
-
-        <table>
-          <thead>
-            <tr>
-              <th class="header-field">Día</th>
-              <th class="header-field">Entrada</th>
-              <th class="header-field">Salida</th>
-              <th class="header-field">Horas</th>
-              <th class="header-field">Valor horas</th>
-              <th class="header-field">Consumos</th>
-              <th class="header-field">Adelantos</th>
-              <th class="header-field">Descuadre</th>
-              <th class="header-field">Deudas Morchis</th>
-              <th class="header-field">Salario</th>
-            </tr>
-          </thead>
-          <tbody>
-            ${quincenaData.payrolls.map(payroll => {
-              const subtotalConsumos = payroll.consumos.reduce((sum, consumo) => sum + consumo.valor, 0);
-              const descuentoConsumos = subtotalConsumos * 0.15;
-              const totalConsumos = subtotalConsumos - descuentoConsumos;
-              
-              return `
-                <tr>
-                  <td class="data-field text-center">${formatDay(payroll.fecha)}</td>
-                  <td class="data-field text-right">${formatTime(payroll.horaInicio)}</td>
-                  <td class="data-field text-right">${formatTime(payroll.horaFin)}</td>
-                  <td class="data-field text-center">${payroll.horasTrabajadas}h ${payroll.minutosTrabajados}m</td>
-                  <td class="text-right data-field">${formatCurrency(payroll.salarioBruto)}</td>
-                  <td class="text-right data-field">${formatCurrency(totalConsumos)}</td>
-                  <td class="text-right data-field">${formatCurrency(payroll.adelantoNomina)}</td>
-                  <td class="text-right data-field">${formatCurrency(payroll.descuadre || 0)}</td>
-                  <td class="text-right data-field">${formatCurrency(payroll.deudaMorchis)}</td>
-                  <td class="text-right data-field">${formatCurrency(calculateDailyValue(payroll))}</td>
-                </tr>
-              `;
-            }).join('')}
-          </tbody>
-          <tfoot class="totals">
-            <tr>
-              <td class="footer-field" colspan="3">TOTALES:</td>
-              <td class="footer-field text-center">${horasTotales}h ${minutosTotales}m</td>
-              <td class="text-right green footer-field">${formatCurrency(totales.salarioBruto)}</td>
-              <td class="text-right red footer-field">-${formatCurrency(totales.totalConsumos)}</td>
-              <td class="text-right red footer-field">-${formatCurrency(totales.adelantos)}</td>
-              <td class="text-right red footer-field">-${formatCurrency(totales.descuadres)}</td>
-              <td class="text-right green footer-field">${formatCurrency(totales.deudas)}</td>
-              <td class="text-right footer-field">${formatCurrency(totales.salarioNeto)}</td>
-            </tr>
-          </tfoot>
-        </table>
-      </body>
-      </html>
+  const showSharingOptions = (blob: Blob, fileName: string, employee: Employee, quincenaType: 'primera' | 'segunda') => {
+    const url = URL.createObjectURL(blob);
+    
+    // Create sharing modal
+    const modal = document.createElement('div');
+    modal.className = 'fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4';
+    
+    const quincenaTitle = quincenaType === 'primera' ? 'Primera' : 'Segunda';
+    const message = `Nómina ${quincenaTitle} Quincena - ${employee.user?.nombre} ${employee.user?.apellido} - ${getMonthName(selectedMonth)} ${selectedYear}`;
+    
+    modal.innerHTML = `
+      <div class="bg-white rounded-lg p-6 max-w-md w-full">
+        <h3 class="text-lg font-medium text-gray-900 mb-4">Compartir nómina</h3>
+        <div class="space-y-3">
+          <button id="share-whatsapp" class="w-full flex items-center justify-center px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors">
+            <svg class="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 24 24">
+              <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.890-5.335 11.893-11.893A11.821 11.821 0 0020.885 3.488"/>
+            </svg>
+            WhatsApp
+          </button>
+          <button id="share-email" class="w-full flex items-center justify-center px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors">
+            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 4.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
+            </svg>
+            Correo Electrónico
+          </button>
+          <button id="download-image" class="w-full flex items-center justify-center px-4 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700 transition-colors">
+            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+            </svg>
+            Descargar
+          </button>
+        </div>
+        <button id="close-modal" class="mt-4 w-full px-4 py-2 text-gray-600 border border-gray-300 rounded-md hover:bg-gray-50 transition-colors">
+          Cancelar
+        </button>
+      </div>
     `;
+    
+    document.body.appendChild(modal);
+    
+    // Event listeners
+    modal.querySelector('#share-whatsapp')?.addEventListener('click', () => {
+      const encodedMessage = encodeURIComponent(message);
+      // For mobile, try to use WhatsApp app, for desktop use WhatsApp Web
+      const isMobile = /Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+      const whatsappUrl = isMobile 
+        ? `whatsapp://send?text=${encodedMessage}`
+        : `https://web.whatsapp.com/send?text=${encodedMessage}`;
+      
+      // Download image first, then open WhatsApp
+      downloadImage(blob, fileName);
+      window.open(whatsappUrl, '_blank');
+      document.body.removeChild(modal);
+      URL.revokeObjectURL(url);
+    });
+    
+    modal.querySelector('#share-email')?.addEventListener('click', () => {
+      const subject = encodeURIComponent(`Nómina ${quincenaTitle} Quincena`);
+      const body = encodeURIComponent(message);
+      const emailUrl = `mailto:?subject=${subject}&body=${body}`;
+      
+      // Download image first, then open email client
+      downloadImage(blob, fileName);
+      window.open(emailUrl, '_blank');
+      document.body.removeChild(modal);
+      URL.revokeObjectURL(url);
+    });
+    
+    modal.querySelector('#download-image')?.addEventListener('click', () => {
+      downloadImage(blob, fileName);
+      document.body.removeChild(modal);
+      URL.revokeObjectURL(url);
+    });
+    
+    modal.querySelector('#close-modal')?.addEventListener('click', () => {
+      document.body.removeChild(modal);
+      URL.revokeObjectURL(url);
+    });
+    
+    // Close on outside click
+    modal.addEventListener('click', (e) => {
+      if (e.target === modal) {
+        document.body.removeChild(modal);
+        URL.revokeObjectURL(url);
+      }
+    });
   };
 
   useEffect(() => {
@@ -426,7 +760,7 @@ export function PayrollPaymentModal({ isOpen, onClose, onSuccess }: PayrollPayme
     const minutosTotales = totales.totalMinutos % 60;
 
     return (
-      <div className="mb-8">
+      <div className="mb-8" ref={quincenaType === 'primera' ? primeraQuincenaRef : segundaQuincenaRef}>
         <div className="flex items-center justify-between mb-4">
           <h4 className="text-lg font-medium text-gray-900">{title}</h4>
           <div className="flex space-x-3">
@@ -441,14 +775,14 @@ export function PayrollPaymentModal({ isOpen, onClose, onSuccess }: PayrollPayme
               Confirmar Nómina
             </Button>
             <Button
-              onClick={() => handleExportarPDF(quincenaType)}
+              onClick={() => handleCaptureAndShare(quincenaType)}
               variant="outline"
               size="sm"
               className="inline-flex items-center"
               disabled={quincenaData.payrolls.length === 0}
             >
-              <Download className="h-4 w-4 mr-2" />
-              Exportar
+              <Share className="h-4 w-4 mr-2" />
+              Compartir
             </Button>
           </div>
         </div>
