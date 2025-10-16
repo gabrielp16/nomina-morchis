@@ -12,6 +12,7 @@
     "backend:build": "cd server && npm run build",
     "backend:start": "cd server && npm start",
     "backend:seed": "cd server && npm run seed",
+    "backend:seed:production": "cd server && npm run seed:production",
     "dev:all": "concurrently \"npm run dev\" \"npm run backend:dev\"",
     "install:all": "npm install && npm run backend:install",
     "build:vercel": "npm install && npx @react-router/dev build",
