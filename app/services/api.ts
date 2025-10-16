@@ -32,8 +32,12 @@ async function fetchApi<T>(endpoint: string, options: RequestInit = {}): Promise
   const token = typeof window !== 'undefined' ? localStorage.getItem('auth_token') : null;
   
   const config: RequestInit = {
+    mode: 'cors',
+    credentials: 'include',
     headers: {
       'Content-Type': 'application/json',
+      'Accept': 'application/json',
+      'Origin': window?.location?.origin || 'https://nomina-morchis.vercel.app',
       ...(token && { Authorization: `Bearer ${token}` }),
       ...options.headers,
     },
