@@ -7,6 +7,7 @@ import { Input } from '../ui/input';
 import { Select } from '../ui/select';
 import { useToast } from '../../context/ToastContext';
 import { useEmployee } from '../../context/EmployeeContext';
+import { useEmployees } from '../../context/EmployeesContext';
 import { payrollService, employeeService } from '../../services/api';
 import { payrollSchema, type PayrollFormData } from '../../lib/validations';
 import type { Employee } from '../../types/auth';
@@ -26,7 +27,7 @@ export function CreatePayrollModal({
   defaultEmployeeId,
   isEmployeeView = false 
 }: CreatePayrollModalProps) {
-  const [employees, setEmployees] = useState<Employee[]>([]);
+  const { getActiveEmployees, getEmployeeById } = useEmployees();
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [calculatedValues, setCalculatedValues] = useState({
@@ -81,12 +82,6 @@ export function CreatePayrollModal({
 
   useEffect(() => {
     if (isOpen) {
-      if (!isEmployeeView) {
-        loadEmployees();
-      } else if (defaultEmployeeId) {
-        // Para vista de empleado, cargar el empleado específico
-        loadSingleEmployee(defaultEmployeeId);
-      }
       // Formatear fecha actual en formato YYYY-MM-DD para el input type="date"
       const today = new Date();
       const formattedDate = today.toISOString().split('T')[0];
@@ -115,38 +110,12 @@ export function CreatePayrollModal({
     }
   }, [isOpen, reset, defaultEmployeeId, isEmployeeView]);
 
-  const loadEmployees = async () => {
-    // Solo cargar empleados si no es vista de empleado
-    if (isEmployeeView) return;
-    
-    try {
-      const response = await employeeService.getAll(1, 100);
-      if (response.success && response.data) {
-        setEmployees(response.data.data.filter(emp => emp.isActive));
-      }
-    } catch (error) {
-      console.error('Error loading employees:', error);
-      showError('Error al cargar empleados');
+  // Helper to get available employees for the select
+  const getAvailableEmployees = (): Employee[] => {
+    if (isEmployeeView && currentEmployee) {
+      return [currentEmployee];
     }
-  };
-
-  const loadSingleEmployee = async (employeeId: string) => {
-    try {
-      // For employee view, use context data instead of API call
-      if (isEmployeeView && currentEmployee) {
-        setEmployees([currentEmployee]);
-        return;
-      }
-      
-      // For admin view, use API call
-      const response = await employeeService.getById(employeeId);
-      if (response.success && response.data) {
-        setEmployees([response.data]);
-      }
-    } catch (error) {
-      console.error('Error loading employee:', error);
-      showError('Error al cargar información del empleado');
-    }
+    return getActiveEmployees();
   };
 
   const calculateWorkTime = (horaInicio: string, horaFin: string) => {
@@ -179,7 +148,7 @@ export function CreatePayrollModal({
     const targetEmployeeId = isEmployeeView ? defaultEmployeeId : employeeId;
     if (!targetEmployeeId) return;
 
-    const selectedEmployee = employees.find(emp => emp.id === targetEmployeeId);
+    const selectedEmployee = getEmployeeById(targetEmployeeId);
     if (!selectedEmployee) return;
 
     // Calcular horas trabajadas
@@ -212,7 +181,7 @@ export function CreatePayrollModal({
       totalDescuentos,
       salarioNeto
     });
-  }, [isEmployeeView, defaultEmployeeId, employeeId, horaInicio, horaFin, consumos, deudaMorchis, adelantoNomina, descuadre, employees]);
+  }, [isEmployeeView, defaultEmployeeId, employeeId, horaInicio, horaFin, consumos, deudaMorchis, adelantoNomina, descuadre, getEmployeeById]);
 
   useEffect(() => {
     calculateValues();
@@ -333,10 +302,10 @@ export function CreatePayrollModal({
                   <Select
                     {...register('employeeId')}
                     onChange={(e) => setValue('employeeId', e.target.value)}
-                    disabled={isLoading || employees.length === 0}
+                    disabled={isLoading || getAvailableEmployees().length === 0}
                   >
                     <option value="">Seleccionar empleado</option>
-                    {employees.map((employee) => (
+                    {getAvailableEmployees().map((employee) => (
                       <option key={employee.id} value={employee.id}>
                         {employee.user.nombre} {employee.user.apellido} - {formatCurrency(employee.salarioPorHora)}/hora
                       </option>
@@ -614,7 +583,7 @@ export function CreatePayrollModal({
             </Button>
             <Button
               type="submit"
-              disabled={isLoading || (!isEmployeeView && (!watch('employeeId') || employees.length === 0)) || (isEmployeeView && !defaultEmployeeId)}
+              disabled={isLoading || (!isEmployeeView && (!watch('employeeId') || getAvailableEmployees().length === 0)) || (isEmployeeView && !defaultEmployeeId)}
             >
               {isLoading ? 'Creando...' : 'Crear Nómina'}
             </Button>

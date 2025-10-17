@@ -11,6 +11,7 @@ import type { Route } from "./+types/root";
 import "./app.css";
 import { AuthProvider } from "./context/AuthContext";
 import { EmployeeProvider } from "./context/EmployeeContext";
+import { EmployeesProvider } from "./context/EmployeesContext";
 import { Layout as AppLayout } from "./components/Layout";
 import { ToastProvider, ToastContainer } from "./context/ToastContext";
 
@@ -40,12 +41,14 @@ export function Layout({ children }: { children: React.ReactNode }) {
       <body>
         <AuthProvider>
           <EmployeeProvider>
-            <ToastProvider>
-              <AppLayout>
-                {children}
-              </AppLayout>
-              <ToastContainer />
-            </ToastProvider>
+            <EmployeesProvider cacheExpiry={5}>
+              <ToastProvider>
+                <AppLayout>
+                  {children}
+                </AppLayout>
+                <ToastContainer />
+              </ToastProvider>
+            </EmployeesProvider>
           </EmployeeProvider>
         </AuthProvider>
         <ScrollRestoration />

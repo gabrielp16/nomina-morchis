@@ -2,7 +2,8 @@ import { useState, useEffect, useRef } from 'react';
 import { X, Calendar, DollarSign, User, CheckCircle, Share } from 'lucide-react';
 import { Button } from '../ui/button';
 import { Select } from '../ui/select';
-import { payrollService, employeeService } from '../../services/api';
+import { payrollService } from '../../services/api';
+import { useEmployees } from '../../context/EmployeesContext';
 import { useToast } from '../../context/ToastContext';
 import type { Payroll, Employee } from '../../types/auth';
 
@@ -25,7 +26,7 @@ interface MonthlyData {
 
 export function PayrollPaymentModal({ isOpen, onClose, onSuccess }: PayrollPaymentModalProps) {
   const [loading, setLoading] = useState(false);
-  const [employees, setEmployees] = useState<Employee[]>([]);
+  const { employees, getActiveEmployees } = useEmployees();
   const [selectedEmployee, setSelectedEmployee] = useState<string>('');
   const [selectedMonth, setSelectedMonth] = useState<string>('');
   const [selectedYear, setSelectedYear] = useState<string>('');
@@ -600,7 +601,6 @@ export function PayrollPaymentModal({ isOpen, onClose, onSuccess }: PayrollPayme
 
   useEffect(() => {
     if (isOpen) {
-      loadEmployees();
       // Set default month and year to current
       const now = new Date();
       setSelectedMonth((now.getMonth() + 1).toString().padStart(2, '0'));
@@ -614,17 +614,7 @@ export function PayrollPaymentModal({ isOpen, onClose, onSuccess }: PayrollPayme
     }
   }, [selectedEmployee, selectedMonth, selectedYear]);
 
-  const loadEmployees = async () => {
-    try {
-      const response = await employeeService.getAll(1, 100);
-      if (response.success && response.data) {
-        setEmployees(response.data.data);
-      }
-    } catch (error) {
-      console.error('Error loading employees:', error);
-      showError('Error al cargar empleados');
-    }
-  };
+  // Ya no necesitamos loadEmployees porque usamos el contexto
 
   const loadPayrollData = async () => {
     if (!selectedEmployee || !selectedMonth || !selectedYear) return;

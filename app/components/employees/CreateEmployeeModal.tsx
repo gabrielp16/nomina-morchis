@@ -73,7 +73,7 @@ export function CreateEmployeeModal({ isOpen, onClose, onSuccess }: CreateEmploy
       });
 
       if (response.success) {
-        success('Empleado creado exitosamente');
+        success(response.message || 'Empleado creado exitosamente');
         onSuccess();
         onClose();
       } else {
@@ -105,7 +105,7 @@ export function CreateEmployeeModal({ isOpen, onClose, onSuccess }: CreateEmploy
     <div className="fixed inset-0 bg-black/50 z-40 transition-opacity opacity-100 flex items-center justify-center p-4 z-50">
       <div className="bg-white rounded-lg max-w-md w-full max-h-[90vh] overflow-y-auto">
         <div className="flex items-center justify-between p-6 border-b">
-          <h3 className="text-lg font-medium text-gray-900">Crear Nuevo Empleado</h3>
+          <h3 className="text-lg font-medium text-gray-900">Agregar Empleado</h3>
           <button
             onClick={onClose}
             className="text-gray-400 hover:text-gray-500"

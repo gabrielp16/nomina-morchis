@@ -123,9 +123,11 @@ export function PayrollDetailsModal({ isOpen, onClose, payroll }: PayrollDetails
                 </div>
                 <div className="ml-4 flex-1 min-w-0">
                   <div className="text-lg font-medium text-gray-900 truncate">
-                    {payroll.employee.user.nombre} {payroll.employee.user.apellido}
+                    {payroll.employee?.user?.nombre || 'Empleado'} {payroll.employee?.user?.apellido || 'Desactivado'}
                   </div>
-                  <div className="text-sm text-gray-500 truncate">{payroll.employee.user.correo}</div>
+                  <div className="text-sm text-gray-500 truncate">
+                    {payroll.employee?.user?.correo || 'Empleado desactivado'}
+                  </div>
                 </div>
               </div>
               <div className="flex justify-start sm:justify-end">
@@ -304,7 +306,11 @@ export function PayrollDetailsModal({ isOpen, onClose, payroll }: PayrollDetails
           <div className="mt-6 pt-4 border-t border-gray-200">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs text-gray-500">
               <div>
-                <span className="font-medium">Procesado por:</span> {payroll.procesadoPor.nombre} {payroll.procesadoPor.apellido}
+                <span className="font-medium">Procesado por:</span> {
+                  payroll.procesadoPor 
+                    ? `${payroll.procesadoPor.nombre} ${payroll.procesadoPor.apellido}` 
+                    : 'Sistema'
+                }
               </div>
               <div>
                 <span className="font-medium">Fecha de creación:</span> {formatDateTime(payroll.createdAt)}

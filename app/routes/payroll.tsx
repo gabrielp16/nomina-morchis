@@ -6,10 +6,11 @@ import { Select } from '../components/ui/select';
 import { ProtectedRoute } from '../components/auth/ProtectedRoute';
 import { useAuth } from '../context/AuthContext';
 import { useEmployee } from '../context/EmployeeContext';
+import { useEmployees } from '../context/EmployeesContext';
 import { useToast } from '../context/ToastContext';
 import { useConfirm } from '../hooks/useConfirm';
-import { payrollService, employeeService } from '../services/api';
-import type { Payroll, Employee } from '../types/auth';
+import { payrollService } from '../services/api';
+import type { Payroll } from '../types/auth';
 import { CreatePayrollModal } from '../components/payroll/CreatePayrollModal';
 import { EditPayrollModal } from '../components/payroll/EditPayrollModal';
 import { PayrollDetailsModal } from '../components/payroll/PayrollDetailsModal';
@@ -19,8 +20,8 @@ import { ConfirmDialog } from '../components/ui/ConfirmDialog';
 export default function PayrollPage() {
   const { hasPermission } = useAuth();
   const { isAdmin, isEmployee, currentEmployee } = useEmployee();
+  const { employees, getActiveEmployees } = useEmployees();
   const [payrolls, setPayrolls] = useState<Payroll[]>([]);
-  const [employees, setEmployees] = useState<Employee[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [filters, setFilters] = useState({
@@ -42,7 +43,7 @@ export default function PayrollPage() {
 
   useEffect(() => {
     if (isAdmin) {
-      Promise.all([loadPayrolls(), loadEmployees()]);
+      loadPayrolls();
     } else if (isEmployee) {
       loadPayrolls();
     }
@@ -75,19 +76,6 @@ export default function PayrollPage() {
       showError('Error al cargar nóminas');
     } finally {
       setLoading(false);
-    }
-  };
-
-  const loadEmployees = async () => {
-    if (!isAdmin) return;
-    
-    try {
-      const response = await employeeService.getAll(1, 100);
-      if (response.success && response.data) {
-        setEmployees(response.data.data);
-      }
-    } catch (error) {
-      console.error('Error loading employees:', error);
     }
   };
 
@@ -557,7 +545,7 @@ export default function PayrollPage() {
                       onChange={(e) => setFilters(prev => ({ ...prev, empleadoId: e.target.value }))}
                     >
                       <option value="">Todos los empleados</option>
-                      {employees.map((employee) => (
+                      {getActiveEmployees().map((employee) => (
                         <option key={employee.id} value={employee.id}>
                           {employee.user?.nombre || 'Usuario'} {employee.user?.apellido || ''}
                         </option>

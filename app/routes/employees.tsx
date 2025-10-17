@@ -169,9 +169,6 @@ export default function EmployeesPage() {
                               Salario/Hora
                             </th>
                             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                              Estado
-                            </th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                               Fecha Registro
                             </th>
                             <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -204,15 +201,6 @@ export default function EmployeesPage() {
                                 <div className="text-sm font-medium text-gray-900">
                                   {formatCurrency(employee.salarioPorHora)}
                                 </div>
-                              </td>
-                              <td className="px-6 py-4 whitespace-nowrap">
-                                <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                                  employee.isActive
-                                    ? 'bg-green-100 text-green-800'
-                                    : 'bg-red-100 text-red-800'
-                                }`}>
-                                  {employee.isActive ? 'Activo' : 'Inactivo'}
-                                </span>
                               </td>
                               <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                                 {new Date(employee.createdAt).toLocaleDateString('es-ES')}
@@ -264,13 +252,6 @@ export default function EmployeesPage() {
                                 <div className="text-sm text-gray-500">{employee.user.correo}</div>
                               </div>
                             </div>
-                            <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                              employee.isActive
-                                ? 'bg-green-100 text-green-800'
-                                : 'bg-red-100 text-red-800'
-                            }`}>
-                              {employee.isActive ? 'Activo' : 'Inactivo'}
-                            </span>
                           </div>
                           
                           <div className="mt-3 grid grid-cols-2 gap-4 text-sm">
