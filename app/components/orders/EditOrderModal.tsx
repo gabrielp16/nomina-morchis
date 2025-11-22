@@ -6,7 +6,7 @@ import { Button } from '../ui/button';
 import { Input } from '../ui/input';
 import { Select } from '../ui/select';
 import { useToast } from '../../context/ToastContext';
-import { dateToInputValue } from '../../lib/utils';
+import { dateToInputValue, formatCurrency } from '../../lib/utils';
 import ordersService from '../../services/ordersService';
 import type { Order, OrderFormData, Client, Product } from '../../types/auth';
 
@@ -173,13 +173,6 @@ export default function EditOrderModal({
     } finally {
       setLoading(false);
     }
-  };
-
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('es-ES', {
-      style: 'currency',
-      currency: 'EUR'
-    }).format(amount);
   };
 
   const getClientName = (cliente: Client | string) => {

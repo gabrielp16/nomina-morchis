@@ -6,6 +6,7 @@ import { Button } from '../ui/button';
 import { Input } from '../ui/input';
 import { Select } from '../ui/select';
 import { useToast } from '../../context/ToastContext';
+import { formatCurrency } from '../../lib/utils';
 import ordersService from '../../services/ordersService';
 import type { CreateOrderFormData, Client, Product } from '../../types/auth';
 
@@ -86,7 +87,7 @@ export default function CreateOrderModal({
         setProducts(productsRes.data);
       }
     } catch (error: any) {
-      showToast(error.message || 'Error al cargar los datos', 'error');
+      error(error.message || 'Error al cargar los datos', 'error');
     }
   };
 
@@ -140,13 +141,6 @@ export default function CreateOrderModal({
     } finally {
       setLoading(false);
     }
-  };
-
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('es-ES', {
-      style: 'currency',
-      currency: 'EUR'
-    }).format(amount);
   };
 
   return (

@@ -5,6 +5,7 @@ import { X, Plus, Trash2, Calculator } from 'lucide-react';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
 import { Select } from '../ui/select';
+import { formatCurrency } from '../../lib/utils';
 import { useToast } from '../../context/ToastContext';
 import { useEmployee } from '../../context/EmployeeContext';
 import { useEmployees } from '../../context/EmployeesContext';
@@ -233,14 +234,6 @@ export function CreatePayrollModal({
 
   const addConsumo = () => {
     append({ valor: 0, descripcion: '' });
-  };
-
-  const formatCurrency = (value: number) => {
-    return new Intl.NumberFormat('es-CO', {
-      style: 'currency',
-      currency: 'COP',
-      minimumFractionDigits: 0,
-    }).format(value);
   };
 
   const formatDate = (dateInput: string | Date) => {

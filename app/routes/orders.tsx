@@ -8,7 +8,7 @@ import { Input } from '../components/ui/input';
 import { Select } from '../components/ui/select';
 import { ConfirmDialog } from '../components/ui/ConfirmDialog';
 import { useConfirm } from '../hooks/useConfirm';
-import { formatDateDisplay, dateToInputValue } from '../lib/utils';
+import { formatDateDisplay, dateToInputValue, formatCurrency } from '../lib/utils';
 import ordersService from '../services/ordersService';
 import CreateOrderModal from '../components/orders/CreateOrderModal';
 import EditOrderModal from '../components/orders/EditOrderModal';
@@ -135,13 +135,6 @@ export default function OrdersPage() {
       ...prev,
       page: 1
     }));
-  };
-
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('es-ES', {
-      style: 'currency',
-      currency: 'EUR'
-    }).format(amount);
   };
 
   const getStatusBadge = (estado: string) => {

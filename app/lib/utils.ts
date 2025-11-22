@@ -57,3 +57,16 @@ export function inputValueToDate(dateString: string): Date {
   const [year, month, day] = dateString.split('-').map(Number);
   return new Date(Date.UTC(year, month - 1, day));
 }
+
+/**
+ * Formatea un número como moneda colombiana (COP)
+ * @param value - El valor numérico a formatear
+ * @returns String formateado como moneda (ej: "$1.234.567")
+ */
+export function formatCurrency(value: number): string {
+  return new Intl.NumberFormat('es-CO', {
+    style: 'currency',
+    currency: 'COP',
+    minimumFractionDigits: 0,
+  }).format(value);
+}

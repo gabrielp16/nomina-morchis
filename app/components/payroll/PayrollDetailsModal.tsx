@@ -12,14 +12,6 @@ interface PayrollDetailsModalProps {
 export function PayrollDetailsModal({ isOpen, onClose, payroll }: PayrollDetailsModalProps) {
   const [isConsumosCollapsed, setIsConsumosCollapsed] = useState(true);
 
-  const formatCurrency = (value: number) => {
-    return new Intl.NumberFormat('es-CO', {
-      style: 'currency',
-      currency: 'COP',
-      minimumFractionDigits: 0,
-    }).format(value);
-  };
-
   // Función específica para formatear el Total (salario neto) redondeado hacia arriba a la quinta decena
   const formatTotal = (value: number) => {
     const roundedValue = Math.ceil(value / 50) * 50;

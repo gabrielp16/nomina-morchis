@@ -6,6 +6,7 @@ import ProtectedRoute from '../components/auth/ProtectedRoute';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { Select } from '../components/ui/select';
+import { formatCurrency } from '../lib/utils';
 import Modal from '../components/ui/modal';
 import { useConfirm } from '../hooks/useConfirm';
 import ordersService from '../services/ordersService';
@@ -106,13 +107,6 @@ export default function ProductsPage() {
 
     return matchesSearch && matchesCategory && matchesActivo;
   });
-
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('es-ES', {
-      style: 'currency',
-      currency: 'EUR'
-    }).format(amount);
-  };
 
   if (!hasPermission('READ_USERS')) {
     return (

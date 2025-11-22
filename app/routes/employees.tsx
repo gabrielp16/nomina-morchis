@@ -5,6 +5,7 @@ import { Input } from '../components/ui/input';
 import { ProtectedRoute } from '../components/auth/ProtectedRoute';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
+import { formatCurrency } from '../lib/utils';
 import { useConfirm } from '../hooks/useConfirm';
 import { employeeService } from '../services/api';
 import type { Employee } from '../types/auth';
@@ -77,14 +78,6 @@ export default function EmployeesPage() {
     setShowCreateModal(false);
     setShowEditModal(false);
     setSelectedEmployee(null);
-  };
-
-  const formatCurrency = (value: number) => {
-    return new Intl.NumberFormat('es-CO', {
-      style: 'currency',
-      currency: 'COP',
-      minimumFractionDigits: 0,
-    }).format(value);
   };
 
   return (
