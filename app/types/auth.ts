@@ -182,3 +182,101 @@ export interface RecentActivity {
   timestamp: Date;
   status: 'success' | 'error' | 'warning';
 }
+
+// Tipos para clientes
+export interface Client {
+  id: string;
+  nombre: string;
+  apellido: string;
+  correo?: string;
+  telefono?: string;
+  direccion?: string;
+  empresa?: string;
+  activo: boolean;
+  fechaCreacion: Date;
+  fechaActualizacion: Date;
+  nombreCompleto?: string;
+}
+
+// Tipos para productos  
+export interface Product {
+  id: string;
+  nombre: string;
+  descripcion?: string;
+  unidad: 'KG' | 'LT' | 'UN' | 'MT' | 'M2' | 'M3' | 'LB' | 'GAL' | 'OZ' | 'TON';
+  categoria?: string;
+  precio?: number;
+  stock?: number;
+  activo: boolean;
+  fechaCreacion: Date;
+  fechaActualizacion: Date;
+}
+
+// Tipos para órdenes
+export interface Order {
+  id: string;
+  fecha: Date;
+  cliente: Client | string;
+  producto: Product | string;
+  lote: string;
+  cantidad: number;
+  precio: number;
+  total: number;
+  estado: 'POR PAGAR' | 'PAGADO' | 'CANCELADO' | 'ENTREGADO';
+  fechaCreacion: Date;
+  fechaActualizacion: Date;
+}
+
+// Tipos para formularios de órdenes
+export interface OrderFormData {
+  fecha: Date;
+  cliente: string;
+  producto: string;
+  lote: string;
+  cantidad: number;
+  precio: number;
+  estado: 'POR PAGAR' | 'PAGADO' | 'CANCELADO' | 'ENTREGADO';
+}
+
+export interface CreateOrderFormData extends OrderFormData {}
+
+// Tipos para filtros de órdenes
+export interface OrderFilters {
+  fechaInicio?: Date;
+  fechaFin?: Date;
+  cliente?: string;
+  producto?: string;
+  lote?: string;
+  estado?: string;
+  page?: number;
+  limit?: number;
+}
+
+// Tipos para estadísticas de órdenes
+export interface OrderStats {
+  total: number;
+  byStatus: Array<{
+    _id: string;
+    count: number;
+    totalAmount: number;
+  }>;
+  sales: {
+    totalAmount: number;
+    averageOrder: number;
+  };
+  monthlyTrend: Array<{
+    _id: {
+      year: number;
+      month: number;
+    };
+    count: number;
+    totalAmount: number;
+  }>;
+  topProducts: Array<{
+    _id: string;
+    totalQuantity: number;
+    totalAmount: number;
+    orderCount: number;
+    producto: Product;
+  }>;
+}

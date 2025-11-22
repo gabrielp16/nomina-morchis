@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { User, LogOut, Settings, Shield, Users, ChevronDown, Activity, UserCheck, ChartArea, DollarSign, UserCog, Calendar } from 'lucide-react';
+import { User, LogOut, Settings, Shield, Users, ChevronDown, Activity, UserCheck, ChartArea, DollarSign, UserCog, Calendar, Package, UserX, ShoppingBag } from 'lucide-react';
 import { Button } from '../ui/button';
 import { LoginSidebar } from './LoginSidebar';
 import { useAuth } from '../../context/AuthContext';
@@ -178,6 +178,23 @@ export function Navigation() {
                           </Link>
                         )}
 
+                        {/* Órdenes Link */}
+                        {hasPermission('READ_USERS') && (
+                          <Link
+                            to="/orders"
+                            className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-700 transition-colors"
+                            onClick={() => {
+                              setShowUserMenu(false);
+                              setShowConfigMenu(false);
+                            }}
+                          >
+                            <div className="h-8 w-8 bg-orange-100 rounded-lg flex items-center justify-center mr-3">
+                              <Package className="h-4 w-4 text-orange-600" />
+                            </div>
+                            <span className="font-medium">Órdenes</span>
+                          </Link>
+                        )}
+
                         {/* Detalle de Nómina Link - Solo para Administrador, Super Administrador y Supervisor */}
                         {hasPermission('READ_PAYROLL') && (hasRole('Administrador') || hasRole('Super Administrador') || hasRole('Supervisor')) && (
                           <Link
@@ -268,6 +285,38 @@ export function Navigation() {
                                     <Shield className="h-3 w-3 text-yellow-600" />
                                   </div>
                                   <span>Permisos</span>
+                                </Link>
+                              )}
+
+                              {hasPermission('READ_USERS') && (
+                                <Link
+                                  to="/clients"
+                                  className="flex items-center px-4 py-2 text-sm text-gray-600 hover:bg-blue-50 hover:text-blue-700 transition-colors"
+                                  onClick={() => {
+                                    setShowUserMenu(false);
+                                    setShowConfigMenu(false);
+                                  }}
+                                >
+                                  <div className="h-6 w-6 bg-blue-100 rounded-md flex items-center justify-center mr-3">
+                                    <UserX className="h-3 w-3 text-blue-600" />
+                                  </div>
+                                  <span>Clientes</span>
+                                </Link>
+                              )}
+
+                              {hasPermission('READ_USERS') && (
+                                <Link
+                                  to="/products"
+                                  className="flex items-center px-4 py-2 text-sm text-gray-600 hover:bg-blue-50 hover:text-blue-700 transition-colors"
+                                  onClick={() => {
+                                    setShowUserMenu(false);
+                                    setShowConfigMenu(false);
+                                  }}
+                                >
+                                  <div className="h-6 w-6 bg-indigo-100 rounded-md flex items-center justify-center mr-3">
+                                    <ShoppingBag className="h-3 w-3 text-indigo-600" />
+                                  </div>
+                                  <span>Productos</span>
                                 </Link>
                               )}
 
