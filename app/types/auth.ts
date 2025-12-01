@@ -187,15 +187,13 @@ export interface RecentActivity {
 export interface Client {
   id: string;
   nombre: string;
-  apellido: string;
   correo?: string;
   telefono?: string;
   direccion?: string;
-  empresa?: string;
+  nit?: string;
   activo: boolean;
   fechaCreacion: Date;
   fechaActualizacion: Date;
-  nombreCompleto?: string;
 }
 
 // Tipos para productos  

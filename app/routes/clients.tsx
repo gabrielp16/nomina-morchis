@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Search, Filter, Plus, Edit, Trash2, Building, Mail, Phone } from 'lucide-react';
+import { Search, Filter, Plus, Edit, Trash2, Building, Mail, Phone, ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
 import ProtectedRoute from '../components/auth/ProtectedRoute';
@@ -22,10 +22,13 @@ export default function ClientsPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [showFilters, setShowFilters] = useState(false);
   const [activoFilter, setActivoFilter] = useState<string>('');
+  const [sortField, setSortField] = useState<'nombre' | 'direccion' | 'correo' | 'nit' | null>(null);
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
 
   // Modales
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [selectedClient, setSelectedClient] = useState<Client | null>(null);
 
   // Cargar clientes
@@ -48,22 +51,36 @@ export default function ClientsPage() {
     }
   };
 
-  const handleDeleteClient = async (id: string) => {
-    const confirmed = await confirm({
-      title: 'Eliminar Cliente',
-      message: '¿Estás seguro de que deseas eliminar este cliente? Esta acción no se puede deshacer.',
-      confirmText: 'Eliminar',
-      confirmVariant: 'destructive'
-    });
+  const handleDeleteClick = (client: Client) => {
+    setSelectedClient(client);
+    setShowDeleteModal(true);
+  };
 
-    if (confirmed) {
-      try {
-        await ordersService.deleteClient(id);
-        success('Cliente eliminado exitosamente');
-        loadClients();
-      } catch (error: any) {
-        error(error.message || 'Error al eliminar el cliente');
-      }
+  const handlePermanentDelete = async () => {
+    if (!selectedClient) return;
+
+    try {
+      await ordersService.deleteClient(selectedClient.id);
+      success('Cliente eliminado permanentemente');
+      setShowDeleteModal(false);
+      setSelectedClient(null);
+      loadClients();
+    } catch (error: any) {
+      error(error.message || 'Error al eliminar el cliente');
+    }
+  };
+
+  const handleDeactivateClient = async () => {
+    if (!selectedClient) return;
+
+    try {
+      await ordersService.updateClient(selectedClient.id, { activo: false });
+      success('Cliente desactivado exitosamente');
+      setShowDeleteModal(false);
+      setSelectedClient(null);
+      loadClients();
+    } catch (error: any) {
+      error(error.message || 'Error al desactivar el cliente');
     }
   };
 
@@ -72,20 +89,51 @@ export default function ClientsPage() {
     setShowEditModal(true);
   };
 
-  // Filtrar clientes
-  const filteredClients = clients.filter(client => {
-    const matchesSearch = searchTerm === '' || 
-      client.nombre.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      client.apellido.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (client.correo && client.correo.toLowerCase().includes(searchTerm.toLowerCase())) ||
-      (client.empresa && client.empresa.toLowerCase().includes(searchTerm.toLowerCase()));
-    
-    const matchesActivo = activoFilter === '' || 
-      (activoFilter === 'true' && client.activo) ||
-      (activoFilter === 'false' && !client.activo);
+  const handleSort = (field: 'nombre' | 'direccion' | 'correo' | 'nit') => {
+    if (sortField === field) {
+      setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortField(field);
+      setSortOrder('asc');
+    }
+  };
 
-    return matchesSearch && matchesActivo;
-  });
+  const getSortIcon = (field: 'nombre' | 'direccion' | 'correo' | 'nit') => {
+    if (sortField !== field) {
+      return <ArrowUpDown className="h-4 w-4" />;
+    }
+    return sortOrder === 'asc' ? 
+      <ArrowUp className="h-4 w-4" /> : 
+      <ArrowDown className="h-4 w-4" />;
+  };
+
+  // Filtrar y ordenar clientes
+  const filteredClients = clients
+    .filter(client => {
+      const matchesSearch = searchTerm === '' || 
+        client.nombre.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (client.correo && client.correo.toLowerCase().includes(searchTerm.toLowerCase())) ||
+        (client.nit && client.nit.toLowerCase().includes(searchTerm.toLowerCase())) ||
+        (client.telefono && client.telefono.toLowerCase().includes(searchTerm.toLowerCase()));
+      
+      const matchesActivo = activoFilter === '' || 
+        (activoFilter === 'true' && client.activo) ||
+        (activoFilter === 'false' && !client.activo);
+
+      return matchesSearch && matchesActivo;
+    })
+    .sort((a, b) => {
+      if (!sortField) return 0;
+      
+      const aValue = (a[sortField] || '').toLowerCase();
+      const bValue = (b[sortField] || '').toLowerCase();
+      
+      if (sortOrder === 'asc') {
+        return aValue.localeCompare(bValue, 'es');
+      } else {
+        return bValue.localeCompare(aValue, 'es');
+      }
+    });
 
   if (!hasPermission('READ_USERS')) {
     return (
@@ -265,13 +313,43 @@ export default function ClientsPage() {
                 <thead className="bg-gray-50">
                   <tr>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Cliente
+                      <button
+                        onClick={() => handleSort('nombre')}
+                        className="flex items-center space-x-1 hover:text-gray-700 transition-colors"
+                      >
+                        <span>Nombre del Cliente</span>
+                        {getSortIcon('nombre')}
+                      </button>
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Contacto
+                      <button
+                        onClick={() => handleSort('direccion')}
+                        className="flex items-center space-x-1 hover:text-gray-700 transition-colors"
+                      >
+                        <span>Dirección</span>
+                        {getSortIcon('direccion')}
+                      </button>
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Empresa
+                      Teléfono
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      <button
+                        onClick={() => handleSort('correo')}
+                        className="flex items-center space-x-1 hover:text-gray-700 transition-colors"
+                      >
+                        <span>Correo</span>
+                        {getSortIcon('correo')}
+                      </button>
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      <button
+                        onClick={() => handleSort('nit')}
+                        className="flex items-center space-x-1 hover:text-gray-700 transition-colors"
+                      >
+                        <span>NIT</span>
+                        {getSortIcon('nit')}
+                      </button>
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       Estado
@@ -285,47 +363,29 @@ export default function ClientsPage() {
                   {filteredClients.map((client) => (
                     <tr key={client.id} className="hover:bg-gray-50">
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="flex items-center">
-                          <div className="h-10 w-10 bg-blue-500 rounded-full flex items-center justify-center">
-                            <span className="text-white font-medium text-sm">
-                              {client.nombre.charAt(0)}{client.apellido.charAt(0)}
-                            </span>
-                          </div>
-                          <div className="ml-4">
-                            <div className="text-sm font-medium text-gray-900">
-                              {client.nombre} {client.apellido}
-                            </div>
-                            <div className="text-sm text-gray-500">
-                              Cliente desde {new Date(client.fechaCreacion).toLocaleDateString('es-ES')}
-                            </div>
-                          </div>
+                        <div className="text-sm font-medium text-gray-900">
+                          {client.nombre}
                         </div>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="space-y-1">
-                          {client.correo && (
-                            <div className="flex items-center text-sm text-gray-900">
-                              <Mail className="h-4 w-4 mr-2 text-gray-400" />
-                              {client.correo}
-                            </div>
-                          )}
-                          {client.telefono && (
-                            <div className="flex items-center text-sm text-gray-900">
-                              <Phone className="h-4 w-4 mr-2 text-gray-400" />
-                              {client.telefono}
-                            </div>
-                          )}
+                      <td className="px-6 py-4">
+                        <div className="text-sm text-gray-900">
+                          {client.direccion || '-'}
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="text-sm text-gray-900">
-                          {client.empresa || '-'}
+                          {client.telefono || '-'}
                         </div>
-                        {client.direccion && (
-                          <div className="text-sm text-gray-500">
-                            {client.direccion}
-                          </div>
-                        )}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="text-sm text-gray-900">
+                          {client.correo || '-'}
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="text-sm text-gray-900">
+                          {client.nit || '-'}
+                        </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <span className={`px-2 py-1 rounded-full text-xs font-medium ${
@@ -351,9 +411,9 @@ export default function ClientsPage() {
                           <Button
                             size="sm"
                             variant="ghost"
-                            onClick={() => handleDeleteClient(client.id)}
+                            onClick={() => handleDeleteClick(client)}
                             className="text-red-600 hover:text-red-700"
-                            aria-label={`Eliminar cliente ${client.nombre} ${client.apellido}`}
+                            aria-label={`Eliminar cliente ${client.nombre}`}
                           >
                             <Trash2 className="h-4 w-4" />
                           </Button>
@@ -380,6 +440,17 @@ export default function ClientsPage() {
           onSuccess={loadClients}
           client={selectedClient}
         />
+
+        <DeleteClientModal
+          isOpen={showDeleteModal}
+          onClose={() => {
+            setShowDeleteModal(false);
+            setSelectedClient(null);
+          }}
+          onDelete={handlePermanentDelete}
+          onDeactivate={handleDeactivateClient}
+          clientName={selectedClient?.nombre || ''}
+        />
       </div>
     </ProtectedRoute>
   );
@@ -399,22 +470,20 @@ function CreateClientModal({
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
     nombre: '',
-    apellido: '',
     correo: '',
     telefono: '',
     direccion: '',
-    empresa: '',
+    nit: '',
     activo: true
   });
 
   const handleClose = () => {
     setFormData({
       nombre: '',
-      apellido: '',
       correo: '',
       telefono: '',
       direccion: '',
-      empresa: '',
+      nit: '',
       activo: true
     });
     onClose();
@@ -423,8 +492,8 @@ function CreateClientModal({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!formData.nombre.trim() || !formData.apellido.trim()) {
-      error('Nombre y apellido son obligatorios');
+    if (!formData.nombre.trim()) {
+      error('El nombre del cliente es obligatorio');
       return;
     }
 
@@ -450,9 +519,9 @@ function CreateClientModal({
     >
       <form onSubmit={handleSubmit} className="space-y-6">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div>
+          <div className="md:col-span-2">
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Nombre *
+              Nombre del Cliente *
             </label>
             <Input
               type="text"
@@ -463,16 +532,27 @@ function CreateClientModal({
             />
           </div>
 
-          <div>
+          <div className="md:col-span-2">
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Apellido *
+              Dirección
             </label>
             <Input
               type="text"
-              value={formData.apellido}
-              onChange={(e) => setFormData({...formData, apellido: e.target.value})}
-              placeholder="Apellido del cliente"
-              required
+              value={formData.direccion}
+              onChange={(e) => setFormData({...formData, direccion: e.target.value})}
+              placeholder="Dirección del cliente"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Teléfono
+            </label>
+            <Input
+              type="text"
+              value={formData.telefono}
+              onChange={(e) => setFormData({...formData, telefono: e.target.value})}
+              placeholder="Teléfono del cliente"
             />
           </div>
 
@@ -490,51 +570,14 @@ function CreateClientModal({
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Teléfono
+              NIT
             </label>
             <Input
               type="text"
-              value={formData.telefono}
-              onChange={(e) => setFormData({...formData, telefono: e.target.value})}
-              placeholder="+34 600 123 456"
+              value={formData.nit}
+              onChange={(e) => setFormData({...formData, nit: e.target.value})}
+              placeholder="NIT del cliente"
             />
-          </div>
-
-          <div className="md:col-span-2">
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Empresa
-            </label>
-            <Input
-              type="text"
-              value={formData.empresa}
-              onChange={(e) => setFormData({...formData, empresa: e.target.value})}
-              placeholder="Nombre de la empresa"
-            />
-          </div>
-
-          <div className="md:col-span-2">
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Dirección
-            </label>
-            <Input
-              type="text"
-              value={formData.direccion}
-              onChange={(e) => setFormData({...formData, direccion: e.target.value})}
-              placeholder="Dirección completa"
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Estado
-            </label>
-            <Select
-              value={formData.activo.toString()}
-              onChange={(e) => setFormData({...formData, activo: e.target.value === 'true'})}
-            >
-              <option value="true">Activo</option>
-              <option value="false">Inactivo</option>
-            </Select>
           </div>
         </div>
 
@@ -575,11 +618,10 @@ function EditClientModal({
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
     nombre: '',
-    apellido: '',
     correo: '',
     telefono: '',
     direccion: '',
-    empresa: '',
+    nit: '',
     activo: true
   });
 
@@ -587,11 +629,10 @@ function EditClientModal({
     if (client) {
       setFormData({
         nombre: client.nombre,
-        apellido: client.apellido,
         correo: client.correo || '',
         telefono: client.telefono || '',
         direccion: client.direccion || '',
-        empresa: client.empresa || '',
+        nit: client.nit || '',
         activo: client.activo
       });
     }
@@ -604,8 +645,8 @@ function EditClientModal({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!client || !formData.nombre.trim() || !formData.apellido.trim()) {
-      error('Nombre y apellido son obligatorios');
+    if (!client || !formData.nombre.trim()) {
+      error('El nombre del cliente es obligatorio');
       return;
     }
 
@@ -628,14 +669,14 @@ function EditClientModal({
     <Modal
       isOpen={isOpen}
       onClose={handleClose}
-      title={`Editar Cliente - ${client.nombre} ${client.apellido}`}
+      title={`Editar Cliente - ${client.nombre}`}
       size="lg"
     >
       <form onSubmit={handleSubmit} className="space-y-6">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div>
+          <div className="md:col-span-2">
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Nombre *
+              Nombre del Cliente *
             </label>
             <Input
               type="text"
@@ -646,16 +687,27 @@ function EditClientModal({
             />
           </div>
 
-          <div>
+          <div className="md:col-span-2">
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Apellido *
+              Dirección
             </label>
             <Input
               type="text"
-              value={formData.apellido}
-              onChange={(e) => setFormData({...formData, apellido: e.target.value})}
-              placeholder="Apellido del cliente"
-              required
+              value={formData.direccion}
+              onChange={(e) => setFormData({...formData, direccion: e.target.value})}
+              placeholder="Dirección del cliente"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Teléfono
+            </label>
+            <Input
+              type="text"
+              value={formData.telefono}
+              onChange={(e) => setFormData({...formData, telefono: e.target.value})}
+              placeholder="Teléfono del cliente"
             />
           </div>
 
@@ -673,37 +725,13 @@ function EditClientModal({
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Teléfono
+              NIT
             </label>
             <Input
               type="text"
-              value={formData.telefono}
-              onChange={(e) => setFormData({...formData, telefono: e.target.value})}
-              placeholder="+34 600 123 456"
-            />
-          </div>
-
-          <div className="md:col-span-2">
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Empresa
-            </label>
-            <Input
-              type="text"
-              value={formData.empresa}
-              onChange={(e) => setFormData({...formData, empresa: e.target.value})}
-              placeholder="Nombre de la empresa"
-            />
-          </div>
-
-          <div className="md:col-span-2">
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Dirección
-            </label>
-            <Input
-              type="text"
-              value={formData.direccion}
-              onChange={(e) => setFormData({...formData, direccion: e.target.value})}
-              placeholder="Dirección completa"
+              value={formData.nit}
+              onChange={(e) => setFormData({...formData, nit: e.target.value})}
+              placeholder="NIT del cliente"
             />
           </div>
 
@@ -738,6 +766,100 @@ function EditClientModal({
           </Button>
         </div>
       </form>
+    </Modal>
+  );
+}
+
+// Modal para eliminar o desactivar cliente
+function DeleteClientModal({
+  isOpen,
+  onClose,
+  onDelete,
+  onDeactivate,
+  clientName
+}: {
+  isOpen: boolean;
+  onClose: () => void;
+  onDelete: () => void;
+  onDeactivate: () => void;
+  clientName: string;
+}) {
+  const [loading, setLoading] = useState(false);
+
+  const handleDelete = async () => {
+    setLoading(true);
+    await onDelete();
+    setLoading(false);
+  };
+
+  const handleDeactivate = async () => {
+    setLoading(true);
+    await onDeactivate();
+    setLoading(false);
+  };
+
+  return (
+    <Modal
+      isOpen={isOpen}
+      onClose={onClose}
+      title="¿Qué acción desea hacer con el cliente?"
+      size="md"
+    >
+      <div className="space-y-6">
+        <p className="text-gray-700">
+          Cliente: <span className="font-semibold">{clientName}</span>
+        </p>
+
+        <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+          <p className="text-sm text-yellow-800">
+            <strong>Nota:</strong> Elija cuidadosamente la acción que desea realizar.
+          </p>
+        </div>
+
+        <div className="space-y-4">
+          <div className="border border-gray-200 rounded-lg p-4 hover:bg-gray-50 transition-colors">
+            <h4 className="font-semibold text-gray-900 mb-2">Desactivar Cliente</h4>
+            <p className="text-sm text-gray-600 mb-4">
+              El cliente se marcará como inactivo y no estará disponible para nuevas órdenes,
+              pero se mantendrán todas las referencias históricas.
+            </p>
+            <Button
+              variant="default"
+              onClick={handleDeactivate}
+              loading={loading}
+              className="w-full"
+            >
+              Desactivar Cliente
+            </Button>
+          </div>
+
+          <div className="border border-red-200 rounded-lg p-4 hover:bg-red-50 transition-colors">
+            <h4 className="font-semibold text-red-900 mb-2">Eliminar Permanentemente</h4>
+            <p className="text-sm text-red-600 mb-4">
+              El cliente será eliminado completamente de todos los registros.
+              <strong> Esta acción no se puede deshacer.</strong>
+            </p>
+            <Button
+              variant="destructive"
+              onClick={handleDelete}
+              loading={loading}
+              className="w-full"
+            >
+              Eliminar Permanentemente
+            </Button>
+          </div>
+        </div>
+
+        <div className="flex justify-end pt-4 border-t border-gray-200">
+          <Button
+            variant="ghost"
+            onClick={onClose}
+            disabled={loading}
+          >
+            Cancelar
+          </Button>
+        </div>
+      </div>
     </Modal>
   );
 }
