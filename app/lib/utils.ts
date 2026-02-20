@@ -70,3 +70,32 @@ export function formatCurrency(value: number): string {
     minimumFractionDigits: 0,
   }).format(value);
 }
+
+/**
+ * Enum de unidades de medida disponibles para productos
+ */
+export enum ProductUnit {
+  KG = 'KG',
+  LT = 'LT',
+  UN = 'UN',
+  MT = 'MT',
+  M2 = 'M2',
+  M3 = 'M3',
+  LB = 'LB',
+  GAL = 'GAL',
+  OZ = 'OZ',
+  TON = 'TON'
+}
+
+export const PRODUCT_UNITS = [
+  { value: ProductUnit.KG, label: 'Kilogramos (KG)' },
+  { value: ProductUnit.LT, label: 'Litros (LT)' },
+  { value: ProductUnit.UN, label: 'Unidades (UN)' },
+  { value: ProductUnit.MT, label: 'Metros (MT)' },
+  { value: ProductUnit.M2, label: 'Metros Cuadrados (M2)' },
+  { value: ProductUnit.M3, label: 'Metros Cúbicos (M3)' },
+  { value: ProductUnit.LB, label: 'Libras (LB)' },
+  { value: ProductUnit.GAL, label: 'Galones (GAL)' },
+  { value: ProductUnit.OZ, label: 'Onzas (OZ)' },
+  { value: ProductUnit.TON, label: 'Toneladas (TON)' }
+] as const;

@@ -202,12 +202,33 @@ export interface Product {
   nombre: string;
   descripcion?: string;
   unidad: 'KG' | 'LT' | 'UN' | 'MT' | 'M2' | 'M3' | 'LB' | 'GAL' | 'OZ' | 'TON';
-  categoria?: string;
-  precio?: number;
-  stock?: number;
   activo: boolean;
   fechaCreacion: Date;
   fechaActualizacion: Date;
+  preciosPorCliente?: Array<{
+    cliente: string;
+    valor: number;
+    id_producto: string;
+    producto: string;
+  }>;
+}
+
+// Tipos para precios de productos
+export interface ProductPrice {
+  id: string;
+  producto: Product | string;
+  cliente: Client | string;
+  precio: number;
+  activo: boolean;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+// Tipos para formularios de precios
+export interface ProductPriceFormData {
+  producto: string;
+  cliente: string;
+  precio: number;
 }
 
 // Tipos para órdenes

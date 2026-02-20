@@ -1,31 +1,16 @@
 import { useState, useEffect } from 'react';
-import { Search, Filter, Plus, Edit, Trash2, Package, Tag, DollarSign } from 'lucide-react';
+import { Search, Filter, Plus, Edit, Trash2, Package } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
 import ProtectedRoute from '../components/auth/ProtectedRoute';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { Select } from '../components/ui/select';
-import { formatCurrency } from '../lib/utils';
+import { ProductUnit, PRODUCT_UNITS } from '../lib/utils';
 import Modal from '../components/ui/modal';
 import { useConfirm } from '../hooks/useConfirm';
 import ordersService from '../services/ordersService';
 import type { Product } from '../types/auth';
-
-type ProductUnit = 'KG' | 'LT' | 'UN' | 'MT' | 'M2' | 'M3' | 'LB' | 'GAL' | 'OZ' | 'TON';
-
-const UNITS = [
-  { value: 'KG', label: 'Kilogramos (KG)' },
-  { value: 'LT', label: 'Litros (LT)' },
-  { value: 'UN', label: 'Unidades (UN)' },
-  { value: 'MT', label: 'Metros (MT)' },
-  { value: 'M2', label: 'Metros Cuadrados (M2)' },
-  { value: 'M3', label: 'Metros Cúbicos (M3)' },
-  { value: 'LB', label: 'Libras (LB)' },
-  { value: 'GAL', label: 'Galones (GAL)' },
-  { value: 'OZ', label: 'Onzas (OZ)' },
-  { value: 'TON', label: 'Toneladas (TON)' }
-];
 
 export default function ProductsPage() {
   const { hasPermission } = useAuth();
@@ -37,7 +22,6 @@ export default function ProductsPage() {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [showFilters, setShowFilters] = useState(false);
-  const [categoryFilter, setCategoryFilter] = useState<string>('');
   const [activoFilter, setActivoFilter] = useState<string>('');
 
   // Modales
@@ -89,23 +73,17 @@ export default function ProductsPage() {
     setShowEditModal(true);
   };
 
-  // Obtener categorías únicas
-  const categories = [...new Set(products.filter(p => p.categoria).map(p => p.categoria))];
-
   // Filtrar productos
   const filteredProducts = products.filter(product => {
     const matchesSearch = searchTerm === '' || 
       product.nombre.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (product.descripcion && product.descripcion.toLowerCase().includes(searchTerm.toLowerCase())) ||
-      (product.categoria && product.categoria.toLowerCase().includes(searchTerm.toLowerCase()));
-    
-    const matchesCategory = categoryFilter === '' || product.categoria === categoryFilter;
+      (product.descripcion && product.descripcion.toLowerCase().includes(searchTerm.toLowerCase()));
     
     const matchesActivo = activoFilter === '' || 
       (activoFilter === 'true' && product.activo) ||
       (activoFilter === 'false' && !product.activo);
 
-    return matchesSearch && matchesCategory && matchesActivo;
+    return matchesSearch && matchesActivo;
   });
 
   if (!hasPermission('READ_USERS')) {
@@ -141,7 +119,7 @@ export default function ProductsPage() {
         </div>
 
         {/* Estadísticas */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div className="bg-white overflow-hidden shadow rounded-lg">
             <div className="p-5">
               <div className="flex items-center">
@@ -183,50 +161,6 @@ export default function ProductsPage() {
               </div>
             </div>
           </div>
-
-          <div className="bg-white overflow-hidden shadow rounded-lg">
-            <div className="p-5">
-              <div className="flex items-center">
-                <div className="flex-shrink-0">
-                  <Tag className="h-8 w-8 text-blue-400" />
-                </div>
-                <div className="ml-5 w-0 flex-1">
-                  <dl>
-                    <dt className="text-sm font-medium text-gray-500 truncate">
-                      Categorías
-                    </dt>
-                    <dd className="text-lg font-medium text-gray-900">
-                      {categories.length}
-                    </dd>
-                  </dl>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-white overflow-hidden shadow rounded-lg">
-            <div className="p-5">
-              <div className="flex items-center">
-                <div className="flex-shrink-0">
-                  <DollarSign className="h-8 w-8 text-green-400" />
-                </div>
-                <div className="ml-5 w-0 flex-1">
-                  <dl>
-                    <dt className="text-sm font-medium text-gray-500 truncate">
-                      Valor Total Stock
-                    </dt>
-                    <dd className="text-lg font-medium text-gray-900">
-                      {formatCurrency(
-                        products
-                          .filter(p => p.precio && p.stock)
-                          .reduce((total, p) => total + (p.precio! * p.stock!), 0)
-                      )}
-                    </dd>
-                  </dl>
-                </div>
-              </div>
-            </div>
-          </div>
         </div>
 
         {/* Filtros */}
@@ -257,7 +191,6 @@ export default function ProductsPage() {
                 variant="ghost" 
                 onClick={() => {
                   setSearchTerm('');
-                  setCategoryFilter('');
                   setActivoFilter('');
                 }}
               >
@@ -268,24 +201,7 @@ export default function ProductsPage() {
 
           {showFilters && (
             <div className="pt-4 border-t border-gray-200">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Categoría
-                  </label>
-                  <Select
-                    value={categoryFilter}
-                    onChange={(e) => setCategoryFilter(e.target.value)}
-                  >
-                    <option value="">Todas las categorías</option>
-                    {categories.map(category => (
-                      <option key={category} value={category}>
-                        {category}
-                      </option>
-                    ))}
-                  </Select>
-                </div>
-
+              <div className="grid grid-cols-1 md:grid-cols-1 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
                     Estado
@@ -331,16 +247,7 @@ export default function ProductsPage() {
                       Producto
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Categoría
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       Unidad
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Precio
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Stock
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       Estado
@@ -369,24 +276,9 @@ export default function ProductsPage() {
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm text-gray-900">
-                          {product.categoria || '-'}
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
                         <span className="px-2 py-1 text-xs font-medium bg-gray-100 text-gray-800 rounded">
                           {product.unidad}
                         </span>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm font-medium text-gray-900">
-                          {product.precio ? formatCurrency(product.precio) : '-'}
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm text-gray-900">
-                          {product.stock !== undefined ? product.stock : '-'}
-                        </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <span className={`px-2 py-1 rounded-full text-xs font-medium ${
@@ -461,22 +353,14 @@ function CreateProductModal({
   const [formData, setFormData] = useState({
     nombre: '',
     descripcion: '',
-    unidad: 'UN' as ProductUnit,
-    categoria: '',
-    precio: '',
-    stock: '',
-    activo: true
+    unidad: ProductUnit.UN
   });
 
   const handleClose = () => {
     setFormData({
       nombre: '',
       descripcion: '',
-      unidad: 'UN' as ProductUnit,
-      categoria: '',
-      precio: '',
-      stock: '',
-      activo: true
+      unidad: ProductUnit.UN
     });
     onClose();
   };
@@ -492,12 +376,12 @@ function CreateProductModal({
     try {
       setLoading(true);
       
+      // Agregar activo: true por defecto
       const productData = {
         ...formData,
-        precio: formData.precio ? parseFloat(formData.precio) : undefined,
-        stock: formData.stock ? parseFloat(formData.stock) : undefined
+        activo: true
       };
-
+      
       await ordersService.createProduct(productData);
       success('Producto creado exitosamente');
       handleClose();
@@ -539,76 +423,24 @@ function CreateProductModal({
               type="text"
               value={formData.descripcion}
               onChange={(e) => setFormData({...formData, descripcion: e.target.value})}
-              placeholder="Descripción del producto"
+              placeholder="Breve descripción del producto (contenido, cantidad, peso, forma, etc.)"
             />
           </div>
 
-          <div>
+          <div className="md:col-span-2">
             <label className="block text-sm font-medium text-gray-700 mb-1">
               Unidad de Medida *
             </label>
             <Select
               value={formData.unidad}
               onChange={(e) => setFormData({...formData, unidad: e.target.value as ProductUnit})}
+              required
             >
-              {UNITS.map(unit => (
+              {PRODUCT_UNITS.map(unit => (
                 <option key={unit.value} value={unit.value}>
                   {unit.label}
                 </option>
               ))}
-            </Select>
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Categoría
-            </label>
-            <Input
-              type="text"
-              value={formData.categoria}
-              onChange={(e) => setFormData({...formData, categoria: e.target.value})}
-              placeholder="Categoría del producto"
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Precio Unitario
-            </label>
-            <Input
-              type="number"
-              min="0"
-              step="0.01"
-              value={formData.precio}
-              onChange={(e) => setFormData({...formData, precio: e.target.value})}
-              placeholder="0.00"
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Stock Inicial
-            </label>
-            <Input
-              type="number"
-              min="0"
-              step="1"
-              value={formData.stock}
-              onChange={(e) => setFormData({...formData, stock: e.target.value})}
-              placeholder="0"
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Estado
-            </label>
-            <Select
-              value={formData.activo.toString()}
-              onChange={(e) => setFormData({...formData, activo: e.target.value === 'true'})}
-            >
-              <option value="true">Activo</option>
-              <option value="false">Inactivo</option>
             </Select>
           </div>
         </div>
@@ -651,11 +483,7 @@ function EditProductModal({
   const [formData, setFormData] = useState({
     nombre: '',
     descripcion: '',
-    unidad: 'UN' as ProductUnit,
-    categoria: '',
-    precio: '',
-    stock: '',
-    activo: true
+    unidad: ProductUnit.UN
   });
 
   useEffect(() => {
@@ -663,11 +491,7 @@ function EditProductModal({
       setFormData({
         nombre: product.nombre,
         descripcion: product.descripcion || '',
-        unidad: product.unidad,
-        categoria: product.categoria || '',
-        precio: product.precio?.toString() || '',
-        stock: product.stock?.toString() || '',
-        activo: product.activo
+        unidad: product.unidad as ProductUnit
       });
     }
   }, [product]);
@@ -687,13 +511,7 @@ function EditProductModal({
     try {
       setLoading(true);
       
-      const productData = {
-        ...formData,
-        precio: formData.precio ? parseFloat(formData.precio) : undefined,
-        stock: formData.stock ? parseFloat(formData.stock) : undefined
-      };
-
-      await ordersService.updateProduct(product.id, productData);
+      await ordersService.updateProduct(product.id, formData);
       success('Producto actualizado exitosamente');
       handleClose();
       onSuccess();
@@ -736,76 +554,24 @@ function EditProductModal({
               type="text"
               value={formData.descripcion}
               onChange={(e) => setFormData({...formData, descripcion: e.target.value})}
-              placeholder="Descripción del producto"
+              placeholder="Breve descripción del producto (contenido, cantidad, peso, forma, etc.)"
             />
           </div>
 
-          <div>
+          <div className="md:col-span-2">
             <label className="block text-sm font-medium text-gray-700 mb-1">
               Unidad de Medida *
             </label>
             <Select
               value={formData.unidad}
               onChange={(e) => setFormData({...formData, unidad: e.target.value as ProductUnit})}
+              required
             >
-              {UNITS.map(unit => (
+              {PRODUCT_UNITS.map(unit => (
                 <option key={unit.value} value={unit.value}>
                   {unit.label}
                 </option>
               ))}
-            </Select>
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Categoría
-            </label>
-            <Input
-              type="text"
-              value={formData.categoria}
-              onChange={(e) => setFormData({...formData, categoria: e.target.value})}
-              placeholder="Categoría del producto"
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Precio Unitario
-            </label>
-            <Input
-              type="number"
-              min="0"
-              step="0.01"
-              value={formData.precio}
-              onChange={(e) => setFormData({...formData, precio: e.target.value})}
-              placeholder="0.00"
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Stock
-            </label>
-            <Input
-              type="number"
-              min="0"
-              step="1"
-              value={formData.stock}
-              onChange={(e) => setFormData({...formData, stock: e.target.value})}
-              placeholder="0"
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Estado
-            </label>
-            <Select
-              value={formData.activo.toString()}
-              onChange={(e) => setFormData({...formData, activo: e.target.value === 'true'})}
-            >
-              <option value="true">Activo</option>
-              <option value="false">Inactivo</option>
             </Select>
           </div>
         </div>
