@@ -14,6 +14,10 @@ body {
   }
 }
 
+* input {
+  color: #343434;
+}
+
 /* Toast Animations */
 @keyframes toast-in {
   from {
