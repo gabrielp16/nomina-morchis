@@ -201,10 +201,13 @@ export interface Product {
   id: string;
   nombre: string;
   descripcion?: string;
-  unidad: 'KG' | 'LT' | 'UN' | 'MT' | 'M2' | 'M3' | 'LB' | 'GAL' | 'OZ' | 'TON';
+  numeroLote: string;
+  fechaVencimiento: Date;
+  precio: number;
   activo: boolean;
   fechaCreacion: Date;
   fechaActualizacion: Date;
+  unidad?: 'KG' | 'LT' | 'UN' | 'MT' | 'M2' | 'M3' | 'LB' | 'GAL' | 'OZ' | 'TON';
   preciosPorCliente?: Array<{
     cliente: string;
     valor: number;

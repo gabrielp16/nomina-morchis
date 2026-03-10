@@ -29,7 +29,15 @@ export function validatePhone(phone: string): boolean {
  * Útil para inputs type="date" que esperan fecha local
  */
 export function dateToInputValue(date: Date | string): string {
+  if (!date) {
+    return '';
+  }
+
   const d = typeof date === 'string' ? new Date(date) : date;
+  if (Number.isNaN(d.getTime())) {
+    return '';
+  }
+
   // Usar UTC para evitar conversiones de zona horaria
   const year = d.getUTCFullYear();
   const month = String(d.getUTCMonth() + 1).padStart(2, '0');
@@ -42,7 +50,15 @@ export function dateToInputValue(date: Date | string): string {
  * sin conversión de zona horaria
  */
 export function formatDateDisplay(date: Date | string): string {
+  if (!date) {
+    return 'N/A';
+  }
+
   const d = typeof date === 'string' ? new Date(date) : date;
+  if (Number.isNaN(d.getTime())) {
+    return 'N/A';
+  }
+
   const year = d.getUTCFullYear();
   const month = String(d.getUTCMonth() + 1).padStart(2, '0');
   const day = String(d.getUTCDate()).padStart(2, '0');

@@ -25,7 +25,7 @@ router.get('/',
       page = 1, 
       limit = 50,
       search,
-      categoria,
+      numeroLote,
       activo
     } = req.query;
 
@@ -37,12 +37,12 @@ router.get('/',
       filters.$or = [
         { nombre: searchRegex },
         { descripcion: searchRegex },
-        { categoria: searchRegex }
+        { numeroLote: searchRegex }
       ];
     }
 
-    if (categoria) {
-      filters.categoria = new RegExp(categoria as string, 'i');
+    if (numeroLote) {
+      filters.numeroLote = new RegExp(numeroLote as string, 'i');
     }
 
     if (activo !== undefined) {
@@ -125,32 +125,24 @@ router.post('/',
       .optional()
       .isLength({ max: 500 })
       .withMessage('La descripción no puede exceder 500 caracteres'),
-    body('unidad')
+    body('numeroLote')
       .notEmpty()
-      .withMessage('La unidad de medida es obligatoria')
-      .isIn(['KG', 'LT', 'UN', 'MT', 'M2', 'M3', 'LB', 'GAL', 'OZ', 'TON'])
-      .withMessage('Unidad de medida inválida'),
-    body('categoria')
-      .optional()
+      .withMessage('El número de lote es obligatorio')
       .isLength({ max: 50 })
-      .withMessage('La categoría no puede exceder 50 caracteres'),
+      .withMessage('El número de lote no puede exceder 50 caracteres'),
+    body('fechaVencimiento')
+      .notEmpty()
+      .withMessage('La fecha de vencimiento es obligatoria')
+      .isISO8601()
+      .withMessage('La fecha de vencimiento debe ser válida'),
     body('precio')
-      .optional()
+      .notEmpty()
+      .withMessage('El precio es obligatorio')
       .isNumeric()
       .withMessage('El precio debe ser un número')
       .custom((value) => {
         if (value < 0) {
           throw new Error('El precio no puede ser negativo');
-        }
-        return true;
-      }),
-    body('stock')
-      .optional()
-      .isNumeric()
-      .withMessage('El stock debe ser un número')
-      .custom((value) => {
-        if (value < 0) {
-          throw new Error('El stock no puede ser negativo');
         }
         return true;
       })
@@ -160,10 +152,10 @@ router.post('/',
     const { 
       nombre, 
       descripcion, 
-      unidad,
-      categoria, 
+      numeroLote,
+      fechaVencimiento,
       precio, 
-      stock 
+      activo 
     } = req.body;
 
     // Verificar si el producto ya existe
@@ -181,10 +173,10 @@ router.post('/',
     const newProduct = new Product({
       nombre,
       descripcion,
-      unidad,
-      categoria,
+      numeroLote,
+      fechaVencimiento,
       precio,
-      stock
+      activo: activo !== undefined ? activo : true
     });
 
     const savedProduct = await newProduct.save();
@@ -214,14 +206,14 @@ router.put('/:id',
       .optional()
       .isLength({ max: 500 })
       .withMessage('La descripción no puede exceder 500 caracteres'),
-    body('unidad')
-      .optional()
-      .isIn(['KG', 'LT', 'UN', 'MT', 'M2', 'M3', 'LB', 'GAL', 'OZ', 'TON'])
-      .withMessage('Unidad de medida inválida'),
-    body('categoria')
+    body('numeroLote')
       .optional()
       .isLength({ max: 50 })
-      .withMessage('La categoría no puede exceder 50 caracteres'),
+      .withMessage('El número de lote no puede exceder 50 caracteres'),
+    body('fechaVencimiento')
+      .optional()
+      .isISO8601()
+      .withMessage('La fecha de vencimiento debe ser válida'),
     body('precio')
       .optional()
       .isNumeric()
@@ -229,16 +221,6 @@ router.put('/:id',
       .custom((value) => {
         if (value < 0) {
           throw new Error('El precio no puede ser negativo');
-        }
-        return true;
-      }),
-    body('stock')
-      .optional()
-      .isNumeric()
-      .withMessage('El stock debe ser un número')
-      .custom((value) => {
-        if (value < 0) {
-          throw new Error('El stock no puede ser negativo');
         }
         return true;
       })

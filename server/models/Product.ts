@@ -3,10 +3,13 @@ import mongoose, { Document, Schema } from 'mongoose';
 export interface IProductWithPrices extends Document {
   nombre: string;
   descripcion?: string;
-  unidad: string;
+  numeroLote: string;
+  fechaVencimiento: Date;
+  precio: number;
   activo: boolean;
   fechaCreacion: Date;
   fechaActualizacion: Date;
+  unidad?: string;
   preciosPorCliente?: Array<{
     cliente: string;
     valor: number;
@@ -18,10 +21,13 @@ export interface IProductWithPrices extends Document {
 export interface IProduct extends Document {
   nombre: string;
   descripcion?: string;
-  unidad: string;
+  numeroLote: string;
+  fechaVencimiento: Date;
+  precio: number;
   activo: boolean;
   fechaCreacion: Date;
   fechaActualizacion: Date;
+  unidad?: string;
 }
 
 const productSchema = new Schema<IProduct>({
@@ -37,12 +43,25 @@ const productSchema = new Schema<IProduct>({
     trim: true,
     maxlength: [500, 'La descripción no puede exceder 500 caracteres']
   },
+  numeroLote: {
+    type: String,
+    required: [true, 'El número de lote es obligatorio'],
+    trim: true,
+    maxlength: [50, 'El número de lote no puede exceder 50 caracteres']
+  },
+  fechaVencimiento: {
+    type: Date,
+    required: [true, 'La fecha de vencimiento es obligatoria']
+  },
+  precio: {
+    type: Number,
+    required: [true, 'El precio es obligatorio'],
+    min: [0, 'El precio no puede ser negativo']
+  },
   unidad: {
     type: String,
-    required: [true, 'La unidad de medida es obligatoria'],
     trim: true,
-    enum: ['KG', 'LT', 'UN', 'MT', 'M2', 'M3', 'LB', 'GAL', 'OZ', 'TON'],
-    default: 'UN'
+    enum: ['KG', 'LT', 'UN', 'MT', 'M2', 'M3', 'LB', 'GAL', 'OZ', 'TON']
   },
   activo: {
     type: Boolean,
@@ -72,6 +91,7 @@ const productSchema = new Schema<IProduct>({
 });
 
 productSchema.index({ nombre: 1 });
+productSchema.index({ numeroLote: 1 });
 productSchema.index({ activo: 1 });
 
 productSchema.pre('save', function(next) {

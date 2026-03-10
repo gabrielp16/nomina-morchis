@@ -127,7 +127,12 @@ export const ordersService = {
   },
 
   getClients: async (): Promise<ApiResponse<Client[]>> => {
-    return await fetchApi<Client[]>('/clients');
+    const response = await fetchApi<any>('/clients');
+    const normalizedData = Array.isArray(response.data) ? response.data : response.data?.data || [];
+    return {
+      ...response,
+      data: normalizedData
+    };
   },
 
   createClient: async (clientData: Omit<Client, 'id' | 'fechaCreacion' | 'fechaActualizacion'>): Promise<ApiResponse<Client>> => {
@@ -151,7 +156,12 @@ export const ordersService = {
   },
 
   getProducts: async (): Promise<ApiResponse<Product[]>> => {
-    return await fetchApi<Product[]>('/products');
+    const response = await fetchApi<any>('/products');
+    const normalizedData = Array.isArray(response.data) ? response.data : response.data?.data || [];
+    return {
+      ...response,
+      data: normalizedData
+    };
   },
 
   createProduct: async (productData: Omit<Product, 'id' | 'fechaCreacion' | 'fechaActualizacion'>): Promise<ApiResponse<Product>> => {
