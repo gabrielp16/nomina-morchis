@@ -41,6 +41,32 @@ export interface Employee {
   updatedAt: Date;
 }
 
+export interface Product {
+  id: string;
+  name: string;
+  description: string;
+  active: boolean;
+  price?: number;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export type ClientType = 'Persona Natural' | 'Persona Juridica';
+
+export interface Client {
+  id: string;
+  name: string;
+  type: ClientType;
+  documentNumber: string;
+  address: string;
+  city: string;
+  phone: string;
+  email: string;
+  active: boolean;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
 // Tipos para nómina
 export interface Consumption {
   valor: number;
@@ -154,6 +180,24 @@ export interface PermissionFormData {
   descripcion?: string;
   modulo: string;
   accion: 'CREATE' | 'READ' | 'UPDATE' | 'DELETE' | 'MANAGE';
+}
+
+export interface ProductFormData {
+  name: string;
+  description: string;
+  active: boolean;
+  price?: number | null;
+}
+
+export interface ClientFormData {
+  name: string;
+  type: ClientType;
+  documentNumber: string;
+  address: string;
+  city: string;
+  phone: string;
+  email: string;
+  active: boolean;
 }
 
 export interface DashboardStats {

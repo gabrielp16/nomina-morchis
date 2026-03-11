@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { User, LogOut, Settings, Shield, Users, ChevronDown, Activity, UserCheck, ChartArea, DollarSign, UserCog, Calendar } from 'lucide-react';
+import { User, LogOut, Settings, Shield, Users, ChevronDown, Activity, UserCheck, ChartArea, DollarSign, UserCog, Calendar, Package, Building2 } from 'lucide-react';
 import { Button } from '../ui/button';
 import { LoginSidebar } from './LoginSidebar';
 import { useAuth } from '../../context/AuthContext';
@@ -158,6 +158,40 @@ export function Navigation() {
                               <UserCog className="h-4 w-4 text-green-600" />
                             </div>
                             <span className="font-medium">Empleados</span>
+                          </Link>
+                        )}
+
+                        {/* Clientes Link */}
+                        {hasPermission('READ_USERS') && (
+                          <Link
+                            to="/clients"
+                            className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-700 transition-colors"
+                            onClick={() => {
+                              setShowUserMenu(false);
+                              setShowConfigMenu(false);
+                            }}
+                          >
+                            <div className="h-8 w-8 bg-cyan-100 rounded-lg flex items-center justify-center mr-3">
+                              <Building2 className="h-4 w-4 text-cyan-600" />
+                            </div>
+                            <span className="font-medium">Clientes</span>
+                          </Link>
+                        )}
+
+                        {/* Productos Link */}
+                        {hasPermission('READ_USERS') && (
+                          <Link
+                            to="/products"
+                            className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-700 transition-colors"
+                            onClick={() => {
+                              setShowUserMenu(false);
+                              setShowConfigMenu(false);
+                            }}
+                          >
+                            <div className="h-8 w-8 bg-amber-100 rounded-lg flex items-center justify-center mr-3">
+                              <Package className="h-4 w-4 text-amber-600" />
+                            </div>
+                            <span className="font-medium">Productos</span>
                           </Link>
                         )}
 

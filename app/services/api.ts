@@ -1,4 +1,4 @@
-import type { User, Role, Permission, ActivityLog, ApiResponse, PaginatedResponse, SimplePaginatedResponse, UserFormData, CreateUserFormData, RoleFormData, PermissionFormData, DashboardStats, RecentActivity, Employee, Payroll } from '../types/auth';
+import type { User, Role, Permission, ActivityLog, ApiResponse, PaginatedResponse, SimplePaginatedResponse, UserFormData, CreateUserFormData, RoleFormData, PermissionFormData, DashboardStats, RecentActivity, Employee, Payroll, Product, ProductFormData, Client, ClientFormData } from '../types/auth';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3001/api';
 
@@ -386,6 +386,72 @@ export const employeeService = {
 
   getAvailableUsers: () => {
     return fetchApi<User[]>('/employees/users/available');
+  },
+};
+
+// Servicios para productos
+export const productService = {
+  getAll: async (page = 1, limit = 10, search?: string): Promise<ApiResponse<SimplePaginatedResponse<Product>>> => {
+    const params = new URLSearchParams({
+      page: page.toString(),
+      limit: limit.toString(),
+      ...(search && { search }),
+    });
+
+    return fetchApi<SimplePaginatedResponse<Product>>(`/products?${params}`);
+  },
+
+  update: async (id: string, productData: Partial<ProductFormData>): Promise<ApiResponse<Product>> => {
+    return fetchApi<Product>(`/products/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(productData),
+    });
+  },
+
+  create: async (productData: ProductFormData): Promise<ApiResponse<Product>> => {
+    return fetchApi<Product>('/products', {
+      method: 'POST',
+      body: JSON.stringify(productData),
+    });
+  },
+
+  delete: async (id: string): Promise<ApiResponse<void>> => {
+    return fetchApi<void>(`/products/${id}`, {
+      method: 'DELETE',
+    });
+  },
+};
+
+// Servicios para clientes
+export const clientService = {
+  getAll: async (page = 1, limit = 10, search?: string): Promise<ApiResponse<SimplePaginatedResponse<Client>>> => {
+    const params = new URLSearchParams({
+      page: page.toString(),
+      limit: limit.toString(),
+      ...(search && { search }),
+    });
+
+    return fetchApi<SimplePaginatedResponse<Client>>(`/clients?${params}`);
+  },
+
+  update: async (id: string, clientData: Partial<ClientFormData>): Promise<ApiResponse<Client>> => {
+    return fetchApi<Client>(`/clients/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(clientData),
+    });
+  },
+
+  create: async (clientData: ClientFormData): Promise<ApiResponse<Client>> => {
+    return fetchApi<Client>('/clients', {
+      method: 'POST',
+      body: JSON.stringify(clientData),
+    });
+  },
+
+  delete: async (id: string): Promise<ApiResponse<void>> => {
+    return fetchApi<void>(`/clients/${id}`, {
+      method: 'DELETE',
+    });
   },
 };
 

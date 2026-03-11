@@ -8,6 +8,8 @@ export default [
   route("/permissions", "routes/permissions.tsx"),
   route("/activity", "routes/activity.tsx"),
   route("/employees", "routes/employees.tsx"),
+  route("/clients", "routes/clients.tsx"),
+  route("/products", "routes/products.tsx"),
   route("/payroll", "routes/payroll.tsx"),
   route("/payroll-details", "routes/payroll-details.tsx"),
   route("/profile", "routes/profile.tsx"),
