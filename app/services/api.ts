@@ -1,4 +1,4 @@
-import type { User, Role, Permission, ActivityLog, ApiResponse, PaginatedResponse, SimplePaginatedResponse, UserFormData, CreateUserFormData, RoleFormData, PermissionFormData, DashboardStats, RecentActivity, Employee, Payroll, Product, ProductFormData, Client, ClientFormData } from '../types/auth';
+import type { User, Role, Permission, ActivityLog, ApiResponse, PaginatedResponse, SimplePaginatedResponse, UserFormData, CreateUserFormData, RoleFormData, PermissionFormData, DashboardStats, RecentActivity, Employee, Payroll, Product, ProductFormData, Client, ClientFormData, InventoryRecord, InventoryFormData, InventorySummaryItem } from '../types/auth';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3001/api';
 
@@ -452,6 +452,43 @@ export const clientService = {
     return fetchApi<void>(`/clients/${id}`, {
       method: 'DELETE',
     });
+  },
+};
+
+// Servicios para inventario
+export const inventoryService = {
+  getAll: async (page = 1, limit = 10, search?: string): Promise<ApiResponse<SimplePaginatedResponse<InventoryRecord>>> => {
+    const params = new URLSearchParams({
+      page: page.toString(),
+      limit: limit.toString(),
+      ...(search && { search }),
+    });
+
+    return fetchApi<SimplePaginatedResponse<InventoryRecord>>(`/inventory?${params}`);
+  },
+
+  create: async (inventoryData: InventoryFormData): Promise<ApiResponse<InventoryRecord>> => {
+    return fetchApi<InventoryRecord>('/inventory', {
+      method: 'POST',
+      body: JSON.stringify(inventoryData),
+    });
+  },
+
+  update: async (id: string, inventoryData: Partial<InventoryFormData>): Promise<ApiResponse<InventoryRecord>> => {
+    return fetchApi<InventoryRecord>(`/inventory/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(inventoryData),
+    });
+  },
+
+  delete: async (id: string): Promise<ApiResponse<void>> => {
+    return fetchApi<void>(`/inventory/${id}`, {
+      method: 'DELETE',
+    });
+  },
+
+  getSummary: async (): Promise<ApiResponse<InventorySummaryItem[]>> => {
+    return fetchApi<InventorySummaryItem[]>('/inventory/summary');
   },
 };
 

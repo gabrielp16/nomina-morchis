@@ -44,9 +44,20 @@ export interface Employee {
 export interface Product {
   id: string;
   name: string;
+  productCode: string;
   description: string;
   active: boolean;
   price?: number;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface InventoryRecord {
+  id: string;
+  product: Product;
+  quantity: number;
+  lotNumber: string;
+  expirationDate: string;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -184,9 +195,24 @@ export interface PermissionFormData {
 
 export interface ProductFormData {
   name: string;
+  productCode: string;
   description: string;
   active: boolean;
   price?: number | null;
+}
+
+export interface InventoryFormData {
+  product: string;
+  quantity: number;
+  lotNumber: string;
+  expirationDate: string;
+}
+
+export interface InventorySummaryItem {
+  productId: string;
+  productName: string;
+  productCode: string;
+  totalQuantity: number;
 }
 
 export interface ClientFormData {

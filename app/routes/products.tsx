@@ -156,6 +156,7 @@ export default function ProductsPage() {
                           <div className="flex items-start justify-between gap-3">
                             <div>
                               <h3 className="text-sm font-semibold text-gray-900">{product.name}</h3>
+                              <p className="text-xs text-gray-500 mt-1">Codigo: {product.productCode || '-'}</p>
                               <p className="text-sm text-gray-700 mt-1 max-w-[220px] truncate" title={product.description}>{product.description}</p>
                             </div>
                             <span
@@ -195,6 +196,9 @@ export default function ProductsPage() {
                               Nombre
                             </th>
                             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                              Codigo Producto
+                            </th>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                               Descripcion
                             </th>
                             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -213,6 +217,9 @@ export default function ProductsPage() {
                             <tr key={product.id} className="hover:bg-gray-50">
                               <td className="px-6 py-4 whitespace-nowrap">
                                 <div className="text-sm font-medium text-gray-900">{product.name}</div>
+                              </td>
+                              <td className="px-6 py-4 whitespace-nowrap">
+                                <div className="text-sm text-gray-700">{product.productCode || '-'}</div>
                               </td>
                               <td className="px-6 py-4">
                                 <div className="text-sm text-gray-700 max-w-md break-words">{product.description}</div>

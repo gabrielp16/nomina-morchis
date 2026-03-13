@@ -11,6 +11,7 @@ import { useToast } from '../../context/ToastContext';
 
 const createProductSchema = z.object({
   name: z.string().trim().min(1, 'El nombre es obligatorio').max(100, 'Maximo 100 caracteres'),
+  productCode: z.string().trim().regex(/^[A-Za-z0-9]{4}$/, 'Debe tener 4 caracteres (letras o numeros) (TTTT)'),
   description: z.string().trim().min(1, 'La descripcion es obligatoria').max(256, 'Maximo 256 caracteres'),
   active: z.boolean(),
   price: z.union([
@@ -43,6 +44,7 @@ export function CreateProductModal({ isOpen, onClose, onSuccess }: CreateProduct
     resolver: zodResolver(createProductSchema),
     defaultValues: {
       name: '',
+      productCode: '',
       description: '',
       active: true,
       price: null
@@ -53,6 +55,7 @@ export function CreateProductModal({ isOpen, onClose, onSuccess }: CreateProduct
     if (isOpen) {
       reset({
         name: '',
+        productCode: '',
         description: '',
         active: true,
         price: null
@@ -70,6 +73,7 @@ export function CreateProductModal({ isOpen, onClose, onSuccess }: CreateProduct
     try {
       const response = await productService.create({
         name: values.name,
+        productCode: values.productCode,
         description: values.description,
         active: values.active,
         price: values.price
@@ -147,6 +151,21 @@ export function CreateProductModal({ isOpen, onClose, onSuccess }: CreateProduct
                 />
                 <p className="mt-1 text-xs text-gray-500">Maximo 100 caracteres</p>
                 {errors.name && <p className="mt-1 text-sm text-red-600">{errors.name.message}</p>}
+              </div>
+
+              <div>
+                <label htmlFor="create-product-code" className="block text-sm font-medium text-gray-700 mb-1">
+                  Codigo Producto *
+                </label>
+                <Input
+                  id="create-product-code"
+                  {...register('productCode')}
+                  maxLength={4}
+                  placeholder="TTTT"
+                  className={cn(errors.productCode && 'border-red-300')}
+                />
+                <p className="mt-1 text-xs text-gray-500">Identificador de 4 caracteres (letras o numeros) del tipo de producto</p>
+                {errors.productCode && <p className="mt-1 text-sm text-red-600">{errors.productCode.message}</p>}
               </div>
 
               <div>

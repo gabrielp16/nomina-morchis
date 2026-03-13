@@ -10,6 +10,7 @@ export default [
   route("/employees", "routes/employees.tsx"),
   route("/clients", "routes/clients.tsx"),
   route("/products", "routes/products.tsx"),
+  route("/inventory", "routes/inventory.tsx"),
   route("/payroll", "routes/payroll.tsx"),
   route("/payroll-details", "routes/payroll-details.tsx"),
   route("/profile", "routes/profile.tsx"),
