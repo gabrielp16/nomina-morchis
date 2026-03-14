@@ -104,7 +104,7 @@ export default function InventoryPage() {
   };
 
   return (
-    <ProtectedRoute requiredPermissions={["READ_USERS"]}>
+    <ProtectedRoute requiredPermissions={["READ_PAYROLL"]}>
       <div className="min-h-screen bg-gray-50">
         <div className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
           <div className="px-4 py-6 sm:px-0">
@@ -117,7 +117,7 @@ export default function InventoryPage() {
                   Registros de productos producidos en planta.
                 </p>
               </div>
-              {hasPermission("CREATE_USERS") && (
+              {hasPermission("CREATE_PAYROLL") && (
                 <div className="mt-4 flex md:mt-0 md:ml-4">
                   <Button
                     onClick={() => setShowCreateModal(true)}
@@ -224,7 +224,7 @@ export default function InventoryPage() {
                           </div>
 
                           <div className="mt-4 flex items-center justify-end gap-2">
-                            {hasPermission("UPDATE_USERS") && (
+                            {hasPermission("UPDATE_PAYROLL") && (
                               <Button
                                 variant="ghost"
                                 size="sm"
@@ -234,7 +234,7 @@ export default function InventoryPage() {
                                 <Edit className="h-4 w-4" />
                               </Button>
                             )}
-                            {hasPermission("DELETE_USERS") && (
+                            {hasPermission("DELETE_PAYROLL") && (
                               <Button
                                 variant="ghost"
                                 size="sm"
@@ -293,7 +293,7 @@ export default function InventoryPage() {
                               </td>
                               <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                                 <div className="flex items-center space-x-2">
-                                  {hasPermission("UPDATE_USERS") && (
+                                  {hasPermission("UPDATE_PAYROLL") && (
                                     <Button
                                       variant="ghost"
                                       size="sm"
@@ -303,7 +303,7 @@ export default function InventoryPage() {
                                       <Edit className="h-4 w-4" />
                                     </Button>
                                   )}
-                                  {hasPermission("DELETE_USERS") && (
+                                  {hasPermission("DELETE_PAYROLL") && (
                                     <Button
                                       variant="ghost"
                                       size="sm"
